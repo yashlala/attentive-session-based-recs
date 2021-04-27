@@ -55,6 +55,9 @@ def create_user_history(df=None):
 
     user_history = {}
     for uid in tqdm(df.user_id.unique()):
+        sequence = df[df.user_id == uid].item_id.values.tolist()
+        if len(sequence) < 5:
+            continue
         user_history[uid] = df[df.user_id == uid].item_id.values.tolist()
             
     return user_history
