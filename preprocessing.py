@@ -97,6 +97,7 @@ def train_val_test_split(user_history=None,max_length=200):
     
     max_length = max_length + 1
 
+
     print("="*10,"Splitting User Histories into Train, Validation, and Test Splits","="*10)
     train_history = {}
     val_history = {}
