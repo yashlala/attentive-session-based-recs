@@ -27,7 +27,7 @@ parser.add_argument('--batch_size',type=int,help='The batch size for stochastic 
 parser.add_argument('--reg',type=float,help='The regularization strength on l2 norm',default = 0.0)
 parser.add_argument('--hidden_layers',type=int,help="The number of hidden layeres",default=2)
 parser.add_argument('--dilations',type=str,help="The dilation scheme of the hidden layers",default="1,2,4,8")
-parser.add_argument('--hitsat',type=int,help='The number of items to measure the hit@k metric (i.e. hit@10 to see if the correct item is within the top 10 scores)',default=10)
+#parser.add_argument('--hitsat',type=int,help='The number of items to measure the hit@k metric (i.e. hit@10 to see if the correct item is within the top 10 scores)',default=10)
 parser.add_argument('--max_len',type=int,help='Maximum length for the sequence',default=200)
 parser.add_argument('--min_len',type=int,help="Minimum session length for a sequence (filter out sessions less than this",default=10)
 
