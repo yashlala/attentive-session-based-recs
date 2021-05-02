@@ -95,7 +95,7 @@ class gru4rec(nn.Module):
         self.hidden_dim =hidden_dim
         self.batch_first =batch_first
         self.output_dim =output_dim
-        self.max_length = 200
+        self.max_length = max_length
         self.pad_token = pad_token
     
         # initialize item-id lookup table
@@ -138,7 +138,7 @@ class gru4recF(nn.Module):
         self.hidden_dim =hidden_dim
         self.batch_first =batch_first
         self.output_dim =output_dim
-        self.max_length = 200
+        self.max_length = max_length
         self.pad_token = pad_token
         self.bert_dim = bert_dim
     
