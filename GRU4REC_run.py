@@ -29,6 +29,7 @@ parser.add_argument('--reg',type=float,help='The regularization strength on l2 n
 #parser.add_argument('--hitsat',type=int,help='The number of items to measure the hit@k metric (i.e. hit@10 to see if the correct item is within the top 10 scores)',default=10)
 parser.add_argument('--max_len',type=int,help='Maximum length for the sequence',default=200)
 parser.add_argument('--min_len',type=int,help="Minimum session length for a sequence (filter out sessions less than this",default=10)
+parser.add_argument('--size',type=str,help='The dataset (1m , 20m , etc) which you will use',default="20m")
 
 """
 TODO:
@@ -41,6 +42,7 @@ ADD ARGUMENTS NEEDED
 args = parser.parse_args()
 
 read_filename = args.read_filename
+size = args.size
 
 num_epochs = args.num_epochs
 lr = args.alpha
@@ -61,7 +63,7 @@ ADD Variable NEEDED
 # ------------------Data Initialization----------------------#
 
 # convert .dat file to time-sorted pandas dataframe
-ml_1m = create_df(read_filename)
+ml_1m = create_df(read_filename,size=size)
 
 # remove users who have sessions lengths less than min_len
 ml_1m = filter_df(ml_1m,item_min=min_len)
