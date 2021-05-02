@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from sklearn.preprocessing import LabelEncoder 
 
-def create_df(filename=None):
+def create_df(filename=None,size="1m"):
     """
     Parameters
     ----------
@@ -24,9 +24,17 @@ def create_df(filename=None):
         returns a sorted by timestamp pandas dataframe with 4 columns: user id, item id, rating, and timestamp.
     """
     print("="*10,"Creating DataFrame","="*10)
-    # read in the .dat file, and the entries on each line are separated by '::'
-    df = pd.read_csv(filename,sep='::',header=None)
-    df.columns= ['user_id','item_id','rating','timestamp']
+    if size == "1m":
+        # read in the .dat file, and the entries on each line are separated by '::'
+        df = pd.read_csv(filename,sep='::',header=None)
+        df.columns= ['user_id','item_id','rating','timestamp']
+        
+    elif size == "20m":
+        df = pd.read_csv(filename,header=0,names=['user_id','item_id','rating','timestamp'])
+    
+    else:
+        print("Not a proper size, or file not found")
+        return
     
     # sort the dataframe by the timestamp, and drop the new "index" that appears from the sort
     df.sort_values('timestamp',inplace=True)
@@ -44,6 +52,55 @@ def create_df(filename=None):
     print("Minimum Session Length: {:d}".format(user_group.min()))
     print("Maximum Session Length: {:d}".format(user_group.max()))
     print("Average Session Length: {:.2f}".format(user_group.mean()))
+    return df.reset_index(drop=True)
+
+def create_movie_df(filename=None,size="1m"):
+    """
+    Parameters
+    ----------
+    filename : string, optional
+        The filename (and path) to the .csv file containing movie ids, title, genre, imdbid, tmdbid, plot . The default is None.
+
+    Returns
+    -------
+    pandas dataframe
+        returns a sorted by timestamp pandas dataframe with 4 columns: user id, item id, rating, and timestamp.
+    """
+    print("="*10,"Creating Movie Info DataFrame","="*10)
+    
+    
+    if size == "1m":
+        # read in the .dat file, and the entries on each line are separated by '::'
+        df = pd.read_csv(filename,sep='::',header=None)
+        df.columns= ["item_id", "title","genre","imdb_id","tmbd_id","mplot"]
+        
+    elif size == "20m":
+           # read in the .csv file, and the entries
+        df = pd.read_csv(filename,header=0,names=["item_id", "title","genre","imdb_id","tmbd_id","mplot"])
+        
+    
+    # get the shape of the dataframe (rows x columns)
+    print(df.shape)
+    
+    plot_sizes = df[-df.mplot.isna()].mplot.apply(lambda x: len(str(x).split()))
+    number_missing = df.mplot.isna().sum()
+    
+    # if there is no movie plot for a movie, make the movie plot the title of the movie
+    df.mplot[df.mplot.isna()] = df.title[df.mplot.isna()]
+    
+    # convert all the movie plots to strings (inacase there are just numbers)
+    df.mplot = df.mplot.apply(str)
+    
+    # print statistics about the user session lengths such as max, min, and average
+    print("Minimum Plot Length: {:d}".format(plot_sizes.min()))
+    print("Maximum Plot Length: {:d}".format(plot_sizes.max()))
+    print("Average Plot Length: {:.2f}".format(plot_sizes.mean()))
+    
+    print("Number of missing plots: {:d}".format(number_missing))
+    
+    # get the number of unique movie id, etc (number of unique values in each column)
+    print(df.nunique())
+
     return df.reset_index(drop=True)
 
 
