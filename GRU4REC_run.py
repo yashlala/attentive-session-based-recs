@@ -78,6 +78,14 @@ ml_1m = reset_object.fit_transform(ml_1m)
 # how many unique users, items, ratings and timestamps are there
 n_users,n_items,n_ratings,n_timestamp = ml_1m.nunique()
 
+
+# value that padded tokens shall take
+pad_token = n_items
+
+# the output dimension for softmax layer
+output_dim = n_items
+
+
 # create a dictionary of every user's session (history)
 # i.e. {user: [user clicks]}
 user_history = create_user_history(ml_1m)
@@ -93,17 +101,11 @@ user_noclicks = create_user_noclick(user_history,ml_1m,n_items)
 # i.e. if max_length = 4, [1,2,3,4,5,6] -> [1,2,3,4] , [2,3,4,5] , [3,4,5,6]
 train_history,val_history,test_history = train_val_test_split(user_history,max_length=max_length)
 
-# value that padded tokens shall take
-pad_token = n_items
-
 # initialize the train,validation, and test pytorch dataset objects
 # eval pads all items except last token to predict
 train_dataset = GRUDataset(train_history,mode='train',max_length=max_length,pad_token=pad_token)
 val_dataset = GRUDataset(val_history,mode='eval',max_length=max_length,pad_token=pad_token)
 test_dataset = GRUDataset(test_history,mode='eval',max_length=max_length,pad_token=pad_token)
-
-# the output dimension for softmax layer
-output_dim = n_items
 
 # create the train,validation, and test pytorch dataloader objects
 train_dl = DataLoader(train_dataset,batch_size = batch_size,shuffle=True)
@@ -113,7 +115,7 @@ test_dl = DataLoader(test_dataset,batch_size=64)
 # ------------------Model Initialization----------------------#
 
 # initialize gru4rec model with arguments specified earlier
-model = gru4rec(embedding_dim,hidden_dim,output_dim=output_dim,max_length=max_length,pad_token=n_items).cuda()
+model = gru4rec(embedding_dim,hidden_dim,output_dim=output_dim,max_length=max_length,pad_token=pad_token).cuda()
 
 # initialize Adam optimizer with gru4rec model parameters
 optimizer = torch.optim.Adam(model.parameters(),lr=lr,weight_decay=reg)

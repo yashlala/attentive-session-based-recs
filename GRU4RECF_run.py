@@ -79,12 +79,18 @@ reset_object = reset_df()
 # i.e. [1,7,5] -> [0,2,1]
 ml_1m = reset_object.fit_transform(ml_1m)
 
-# get the item id : bert plot embedding dictionary
-feature_embed = bert2dict(bert_filename=read_bert_filename)
-
-
 # how many unique users, items, ratings and timestamps are there
 n_users,n_items,n_ratings,n_timestamp = ml_1m.nunique()
+
+# value that padded tokens shall take
+pad_token = n_items
+
+# the output dimension for softmax layer
+output_dim = n_items
+
+
+# get the item id : bert plot embedding dictionary
+feature_embed = bert2dict(bert_filename=read_bert_filename)
 
 # create a dictionary of every user's session (history)
 # i.e. {user: [user clicks]}
@@ -121,7 +127,7 @@ test_dl = DataLoader(test_dataset,batch_size=64)
 # ------------------Model Initialization----------------------#
 
 # initialize gru4rec model with arguments specified earlier
-model = gru4recF(embedding_dim,hidden_dim,output_dim=output_dim,max_length=max_length,pad_token=n_items)
+model = gru4recF(embedding_dim,hidden_dim,output_dim=output_dim,max_length=max_length,pad_token=pad_token)
 model.init_weight(reset_object,feature_embed)
 model = model.cuda()
 
