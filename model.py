@@ -182,5 +182,7 @@ class gru4recF(nn.Module):
     
     def init_weight(self,reset_object,feature_embed):
         for (item_id,embedding) in feature_embed.items():
+            if item_id not in reset_object.item_enc.classes_:
+                continue
             item_id = reset_object.item_enc.transform([item_id]).item()
             self.plot_embedding.weight.data[item_id,:] = torch.DoubleTensor(embedding)
