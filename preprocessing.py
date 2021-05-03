@@ -232,6 +232,7 @@ def create_user_history(df=None):
     
     print("="*10,"Creating User Histories","="*10)
     
+    """
     # initialize empty user dictionary
     user_history = {}
     
@@ -241,7 +242,9 @@ def create_user_history(df=None):
         sequence = df[df.user_id == uid].item_id.values.tolist()
         # save session as value in dictionary corresponding to key uid
         user_history[uid] = sequence
-            
+    """
+        
+    user_history = {uid : df[df.user_id == uid].item_id.values.tolist() for uid in tqdm(df.user_id.unique())}
     return user_history
 
 def convert_genres(df, null_genre="NULL"):
@@ -330,8 +333,8 @@ class reset_df_genres(object):
         enc: the encoder for genres
         """
         new_df = df.copy()
-        new_df['item_id'] = self.item_enc.fit_transform(df['item_id'])
-        encodings = np.unique(np.concatenate(new_df['genre'].tolist()))
+        new_df['item_id'] = self.item_enc.fit_transform(df['item_id']) # this is problem id from movie excel sheet or id from ratings excel sheet. . .
+        encodings = np.unique(np.concatenate(new_df['genre'].tolist())) 
         self.genre_enc.fit(encodings)
         new_df['genre'] = new_df.genre.apply(self.genre_enc.transform)
         
