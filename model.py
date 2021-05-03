@@ -132,15 +132,18 @@ class gru4recF(nn.Module):
     pad_token: the value that pad tokens should be set to for GRU-RNN and item embedding
     bert_dim: the dimension of the feature-embedding look-up table
     """
-    def __init__(self,embedding_dim,hidden_dim,output_dim,batch_first=True,max_length=200,pad_token=0,bert_dim=768):
+    def __init__(self,embedding_dim,hidden_dim,output_dim,genre_dim=1,batch_first=True,max_length=200,pad_token=0,pad_genre_token=0,bert_dim=768,genre=False):
         super(gru4recF,self).__init__()
         self.embedding_dim = embedding_dim
         self.hidden_dim =hidden_dim
         self.batch_first =batch_first
         self.output_dim =output_dim
+        self.genre_dim = genre_dim
         self.max_length = max_length
         self.pad_token = pad_token
+        self.pad_genre_token = pad_genre_token
         self.bert_dim = bert_dim
+        self.genre = genre
     
         # initialize item-id lookup table
         # add 1 to output dimension because we have to add a pad token
@@ -153,6 +156,9 @@ class gru4recF(nn.Module):
         
         # project plot embedding to same dimensionality as movie embedding
         self.plot_projection = nn.Linear(bert_dim,embedding_dim)
+        
+        if genre:
+            self.genre_embedding = nn.Embedding(genre_dim,embedding_dim,padding_idx=pad_genre_token)
 
 
         self.encoder_layer = nn.GRU(embedding_dim,self.hidden_dim,batch_first=self.batch_first)
@@ -165,7 +171,10 @@ class gru4recF(nn.Module):
         # do I add non-linearity or not? ... 
         # concatenate or not? ...
         # many questions ...
-        x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding(x))
+        if self.genre:
+            x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding(x)) + self.genre_embedding(x).sum(1)
+        else:
+            x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding(x)) 
         
                     
         if pack:
