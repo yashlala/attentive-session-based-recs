@@ -2,7 +2,7 @@
 """
 Created on Sat Mar 27 07:39:46 2021
 
-@author: lpott
+@author: lpott, hamlinliu17
 """
 import numpy as np
 import pandas as pd
@@ -10,6 +10,9 @@ import pandas as pd
 from tqdm import tqdm
 
 from sklearn.preprocessing import LabelEncoder 
+
+
+# TODO: check if you can increase the efficiency
 
 def create_df(filename=None,size="1m"):
     """
@@ -241,6 +244,118 @@ def create_user_history(df=None):
             
     return user_history
 
+def convert_genres(df, null_genre="NULL"):
+    """
+    Parameters
+    ----------
+    
+    df: pandas dataframe
+        dataframe that is outputed from create_movie_df
+        
+    Returns
+    -------
+    
+    df: same df but with the genre column changed
+    """
+    new_df = df[['item_id', 'genre']].copy()
+    new_df['genre'] = new_df.genre.apply(lambda x: x.split('|'))
+    max_genres = new_df['genre'].apply(lambda x: len(x)).max()
+    
+    def filling_genres(x):
+        fill_value = null_genre
+        added_null = max_genres - len(x)
+        return x + added_null * [fill_value]
+    
+    new_df['genre'] = new_df.genre.apply(filling_genres)
+    return new_df
+
+class reset_df_genres(object):
+    
+    def __init__(self):
+        print("="*10,"Initialize Reset DataFrame Object","="*10)
+        
+        # initialize labelencoder (which encode target labels with value between 0 and n_classes-1.)
+        self.item_enc = LabelEncoder()
+        self.user_enc = LabelEncoder()
+        self.genre_enc = LabelEncoder()
+        
+    def fit_transform(self, df, movie_df):
+        """
+        Parameters
+        ----------
+        df : pandas dataframe
+            The pandas dataframe where each row is a user id, item id, rating, and timestamp. 
+            
+        movie_df: pandas dataframe
+            dataframe that is outputed from convert_genres
+
+        Returns
+        -------
+        df : pandas dataframe
+            The pandas dataframe with the item ids and user ids mapped to a value between 0 and n_unique_item_ids-1 and 0 and n_unique_user_ids-1 respectively.
+        
+        movie_df
+        """
+        print("="*10,"Resetting user ids and item ids in DataFrame as well as movie DataFrame","="*10)
+        
+        new_movie_df = self.encoding_genres(movie_df)
+        
+        # encode item ids with value between 0 and n_classes-1.
+        df['item_id'] = self.item_enc.transform(df['item_id'])
+        
+        # encode movie ids with value between 0 and n_classes-1.
+        df['user_id'] = self.user_enc.fit_transform(df['user_id'])
+        
+        # make sure that the item id and the user id both start at 0 
+        assert df.user_id.min() == 0
+        assert df.item_id.min() == 0 
+        
+        return df, new_movie_df
+    
+    def encoding_genres(self, df):
+        """
+        Parameters
+        ----------
+
+        df: pandas dataframe
+            dataframe that is outputed from convert_genres
+
+        reset_encoders: encoder object used for the main dataframe
+
+        Returns
+        -------
+
+        df: same df but with the genre and item column changed to encoding
+
+        enc: the encoder for genres
+        """
+        new_df = df.copy()
+        new_df['item_id'] = self.item_enc.fit_transform(df['item_id'])
+        encodings = np.unique(np.concatenate(new_df['genre'].tolist()))
+        self.genre_enc.fit(encodings)
+        new_df['genre'] = new_df.genre.apply(self.genre_enc.transform)
+        
+        return new_df
+    
+    def inverse_transform(self,df):
+        """
+        Parameters
+        ----------
+        df : pandas dataframe
+            The pandas dataframe where each row is a user id, item id, rating, and timestamp. 
+
+        Returns
+        -------
+        df : pandas dataframe
+            The pandas dataframe with the item ids and user ids mapped back to their original item ids and user ids respectively.
+        """
+        # Transform item ids back to original encoding.
+        df['item_id'] = self.item_enc.inverse_transform(df['item_id'])
+        
+        # Transform user ids back to original encoding.
+        df['user_id'] = self.user_enc.inverse_transform(df['user_id'])
+        return df
+
 def train_val_test_split(user_history=None,max_length=200):
     """
     Leave-one-out training scheme
@@ -292,6 +407,7 @@ def train_val_test_split(user_history=None,max_length=200):
         
     return train_history,val_history,test_history
 
+# TODO: make this better
 def create_user_noclick(user_history,df,n_items):
     """
     Parameters
