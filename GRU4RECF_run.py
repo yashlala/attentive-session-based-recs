@@ -32,6 +32,8 @@ parser.add_argument('--max_len',type=int,help='Maximum length for the sequence',
 parser.add_argument('--min_len',type=int,help="Minimum session length for a sequence (filter out sessions less than this",default=10)
 parser.add_argument('--size',type=str,help='The dataset (1m , 20m , etc) which you will use',default="20m")
 parser.add_argument('--read_bert_filename',type=str,help='The filename to read all the pre-computed feature embeddings from or to',default="bert_sequence.txt")
+parser.add_argument('--train_method',type=str,help="How you want to switch off between feature optimizers versus item id optimizers ('interleave', 'alernate', ...)",default="interleave")
+
 
 
 """
@@ -47,6 +49,7 @@ args = parser.parse_args()
 read_filename = args.read_filename
 read_bert_filename = args.read_bert_filename
 size = args.size
+train_method = args.train_method
 
 num_epochs = args.num_epochs
 lr = args.alpha
@@ -107,17 +110,11 @@ user_noclicks = create_user_noclick(user_history,ml_1m,n_items)
 # i.e. if max_length = 4, [1,2,3,4,5,6] -> [1,2,3,4] , [2,3,4,5] , [3,4,5,6]
 train_history,val_history,test_history = train_val_test_split(user_history,max_length=max_length)
 
-# value that padded tokens shall take
-pad_token = n_items
-
 # initialize the train,validation, and test pytorch dataset objects
 # eval pads all items except last token to predict
 train_dataset = GRUDataset(train_history,mode='train',max_length=max_length,pad_token=pad_token)
 val_dataset = GRUDataset(val_history,mode='eval',max_length=max_length,pad_token=pad_token)
 test_dataset = GRUDataset(test_history,mode='eval',max_length=max_length,pad_token=pad_token)
-
-# the output dimension for softmax layer
-output_dim = n_items
 
 # create the train,validation, and test pytorch dataloader objects
 train_dl = DataLoader(train_dataset,batch_size = batch_size,shuffle=True)
@@ -157,7 +154,7 @@ for epoch in range(num_epochs):
     
     running_loss = 0
 
-    for data in train_dl:
+    for j,data in enumerate(train_dl,position=0,leave=True):
         optimizer_features.zero_grad()
         optimizer_ids.zero_grad()
         
@@ -172,10 +169,18 @@ for epoch in range(num_epochs):
 
         loss.backward()
         
-        if (epoch+1) % 2 == 0:
-            optimizer_features.step()
-        else:
-            optimizer_ids.step()
+        if train_method == "interleave":
+            # interleave on the epochs
+            if (j+1) % 2 == 0:
+                optimizer_features.step()
+            else:
+                optimizer_ids.step()
+        
+        elif train_method == "alternate":
+            if (epoch+1) % 2 == 0:
+                optimizer_features.step()
+            else:
+                optimizer_ids.step()
         
         running_loss += loss.detach().cpu().item()
         
