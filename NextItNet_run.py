@@ -23,6 +23,7 @@ parser.add_argument('--num_epochs', type=int, help='Number of Training Epochs', 
 parser.add_argument('--alpha', type=float, help='Learning Rate', default=0.001)
 parser.add_argument('--embedding_dim',type=int,help="Size of item embedding",default=64)
 parser.add_argument('--read_filename',type=str,help='The filename to read all the MovieLens-1 million data from to the Dataframe',default="ml-1m\\ratings.dat")
+parser.add_argument('--read_movie_filename',type=str,help='The filename to read all the MovieLens-1 million movie data from to the Dataframe',default="")
 parser.add_argument('--batch_size',type=int,help='The batch size for stochastic gradient descent',default=32)
 parser.add_argument('--reg',type=float,help='The regularization strength on l2 norm',default = 0.0)
 parser.add_argument('--hidden_layers',type=int,help="The number of hidden layeres",default=2)
@@ -38,6 +39,7 @@ parser.add_argument('--size',type=str,help='The dataset (1m , 20m , etc) which y
 args = parser.parse_args()
 
 read_filename = args.read_filename
+read_movie_filename = args.read_movie_filename
 size = args.size
 
 num_epochs = args.num_epochs
