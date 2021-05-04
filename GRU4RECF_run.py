@@ -25,7 +25,7 @@ parser.add_argument('--batch_size',type=int,help='The batch size for stochastic 
 parser.add_argument('--reg',type=float,help='The regularization strength on l2 norm',default = 0.0)
 parser.add_argument('--num_epochs', type=int, help='Number of Training Epochs', default=25)
 parser.add_argument('--alpha', type=float, help='Learning Rate', default=5e-3)
-parser.add_argument('--train_method',type=str,help="How you want to switch off between feature optimizers versus item id optimizers ('interleave', 'alternate', ...)",default="alternate")
+parser.add_argument('--train_method',type=str,help="How you want to switch off between feature optimizers versus item id optimizers ('interleave', 'alternate', 'normal' ...)",default="normal")
 
 
 # model arguments
@@ -179,14 +179,14 @@ if bert_dim != 0:
 model = model.cuda()
 
 # initialize Adam optimizer with gru4rec model parameters
-if (bert_dim != 0) or (genre_dim != 0):
+if train_method != "normal":
     optimizer_features = torch.optim.Adam([param for name,param in model.named_parameters() if (("movie" not in name) or ("plot_embedding" in name) or ("genre" in name)) ],
                                           lr=lr,weight_decay=reg)
     
     optimizer_ids = torch.optim.Adam([param for name,param in model.named_parameters() if ("plot" not in name) and ("genre" not in name)],
                                      lr=lr,weight_decay=reg)
-    
-else:
+
+elif train_method == "normal":
     optimizer = torch.optim.Adam(model.parameters(),lr=lr,weight_decay=reg)
     
 # ------------------ Objective/Metric Initialization ------------# 
@@ -209,11 +209,11 @@ for epoch in range(num_epochs):
 
     for j,data in enumerate(train_dl,position=0,leave=True):
         
-        if (bert_dim != 0) or (genre_dim != 0):
+        if train_method != "normal":
             optimizer_features.zero_grad()
             optimizer_ids.zero_grad()
             
-        else: 
+        elif train_method == "normal": 
             optimizer.zero_grad()
         
         if genre_dim != 0:            
@@ -233,21 +233,21 @@ for epoch in range(num_epochs):
         loss.backward()
         
         
-        if (bert_dim != 0) or (genre_dim != 0):
+        if train_method != "normal":
             if train_method == "interleave":
                 # interleave on the epochs
                 if (j+1) % 2 == 0:
                     optimizer_features.step()
                 else:
                     optimizer_ids.step()
-            
+
             elif train_method == "alternate":
                 if (epoch+1) % 2 == 0:
                     optimizer_features.step()
                 else:
                     optimizer_ids.step()
-        
-        else:
+
+        elif train_method == "normal":
             optimizer.step()
             
         running_loss += loss.detach().cpu().item()
