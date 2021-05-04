@@ -74,8 +74,9 @@ def create_movie_df(filename=None,size="1m"):
     
     if size == "1m":
         # read in the .dat file, and the entries on each line are separated by '::'
-        df = pd.read_csv(filename,sep='::',header=None)
-        df.columns= ["item_id", "title","genre","imdb_id","tmbd_id","mplot"]
+        #df = pd.read_csv(filename,sep='::',header=None)
+        #df.columns= ["item_id", "title","genre","imdb_id","tmbd_id","mplot"]
+        df = pd.read_csv(filename,header=0,names=["item_id","title","genre","mplot"])
         
     elif size == "20m":
            # read in the .csv file, and the entries
