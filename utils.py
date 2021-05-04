@@ -84,6 +84,7 @@ if __name__ == "__main__":
 
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased',truncation=True)
     model = BertForSequenceClassification.from_pretrained('bert-base-uncased').to(device)
+    model.eval()
     bert_dim = model.config.hidden_size
     
     movie_df = create_movie_df(read_movie_filename,size=size)
