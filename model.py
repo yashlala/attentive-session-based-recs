@@ -113,10 +113,10 @@ class gru4recF(nn.Module):
         #  initialize plot lookup table
         # add 1 to output dimensino because we have to add a pad token
         if bert_dim != 0:
-            #self.plot_embedding = nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
+            self.plot_embedding = nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
             #self.plot_embedding.requires_grad_(requires_grad=False)
-            self.plot_embedding = torch.ones(output_dim+1,bert_dim).cuda() #nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
-            self.plot_embedding[pad_token,:] = 0
+            #self.plot_embedding = torch.ones(output_dim+1,bert_dim).cuda() #nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
+            #self.plot_embedding[pad_token,:] = 0
             
             # project plot embedding to same dimensionality as movie embedding
             self.plot_projection = nn.Linear(bert_dim,embedding_dim)
@@ -136,9 +136,9 @@ class gru4recF(nn.Module):
         # concatenate or not? ...
         # many questions ...
         if (self.bert_dim != 0) and (self.genre_dim != 0):
-            x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding[x]) + self.genre_embedding(x_genre).sum(2)
+            x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding(x)) + self.genre_embedding(x_genre).sum(2)
         elif (self.bert_dim != 0) and (self.genre_dim == 0):
-            x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding[x]) 
+            x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding(x)) 
         elif (self.bert_dim == 0) and (self.genre_dim != 0):
             x = self.movie_embedding(x) + self.genre_embedding(x_genre).sum(2)
         else:
@@ -161,7 +161,7 @@ class gru4recF(nn.Module):
             if item_id not in reset_object.item_enc.classes_:
                 continue
             item_id = reset_object.item_enc.transform([item_id]).item()
-            self.plot_embedding[item_id,:] = torch.DoubleTensor(embedding)
+            self.plot_embedding.weight.data[item_id,:] = torch.DoubleTensor(embedding)
             
 class gru4recFC(nn.Module):
     """
@@ -196,10 +196,10 @@ class gru4recFC(nn.Module):
         #  initialize plot lookup table
         # add 1 to output dimensino because we have to add a pad token
         if bert_dim != 0:
-            #self.plot_embedding = nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
+            self.plot_embedding = nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
             #self.plot_embedding.requires_grad_(requires_grad=False)
-            self.plot_embedding = torch.ones(output_dim+1,bert_dim).cuda() #nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
-            self.plot_embedding[pad_token,:] = 0
+            #self.plot_embedding = torch.ones(output_dim+1,bert_dim).cuda() #nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
+            #self.plot_embedding[pad_token,:] = 0
         
         if genre_dim != 0:
             self.genre_embedding = nn.Embedding(genre_dim+1,embedding_dim,padding_idx=pad_genre_token)
@@ -217,9 +217,9 @@ class gru4recFC(nn.Module):
         # concatenate or not? ...
         # many questions ...
         if (self.bert_dim != 0) and (self.genre_dim != 0):
-            x = torch.cat( (self.movie_embedding(x),self.plot_embedding[x],self.genre_embedding(x_genre).sum(2)) , 2)
+            x = torch.cat( (self.movie_embedding(x),self.plot_embedding(x),self.genre_embedding(x_genre).sum(2)) , 2)
         elif (self.bert_dim != 0) and (self.genre_dim == 0):
-            x = torch.cat( (self.movie_embedding(x),self.plot_embedding[x]) , 2)
+            x = torch.cat( (self.movie_embedding(x),self.plot_embedding(x) ) , 2)
         elif (self.bert_dim == 0) and (self.genre_dim != 0):
             x = torch.cat( (self.movie_embedding(x),self.genre_embedding(x_genre).sum(2)) , 2)
         else:
@@ -245,7 +245,7 @@ class gru4recFC(nn.Module):
             if item_id not in reset_object.item_enc.classes_:
                 continue
             item_id = reset_object.item_enc.transform([item_id]).item()
-            self.plot_embedding[item_id,:] = torch.DoubleTensor(embedding)
+            self.plot_embedding.weight.data[item_id,:] = torch.DoubleTensor(embedding)
             
             
 class gru4rec_vanilla(nn.Module):
@@ -323,8 +323,9 @@ class gru4rec_feature(nn.Module):
         self.bert_dim = 0
     
         # initialize item-id lookup table as one hot vector
-        self.plot_embedding = torch.ones(output_dim+1,bert_dim).cuda() #nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
-        self.plot_embedding[pad_token,:] = 0
+        self.plot_embedding = nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
+        #self.plot_embedding = torch.ones(output_dim+1,bert_dim).cuda() #nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
+        #self.plot_embedding[pad_token,:] = 0
         #self.plot_embedding.requires_grad_(requires_grad=False)
         
         #  initialize plot lookup table
@@ -341,7 +342,7 @@ class gru4rec_feature(nn.Module):
         # concatenate or not? ...
         # many questions ...
 
-        x = self.plot_embedding[x]
+        x = self.plot_embedding(x)
                     
         if pack:
             x = pack_padded_sequence(x,x_lens,batch_first=True,enforce_sorted=False)
@@ -360,4 +361,4 @@ class gru4rec_feature(nn.Module):
             if item_id not in reset_object.item_enc.classes_:
                 continue
             item_id = reset_object.item_enc.transform([item_id]).item()
-            self.plot_embedding[item_id,:] = torch.DoubleTensor(embedding)
+            self.plot_embedding.weight.data[item_id,:] = torch.DoubleTensor(embedding)
