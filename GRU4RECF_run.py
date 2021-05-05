@@ -32,6 +32,7 @@ parser.add_argument('--train_method',type=str,help="How you want to switch off b
 parser.add_argument('--embedding_dim',type=int,help="Size of item embedding",default=128)
 parser.add_argument('--bert_dim',type=int,help="Size of bert embedding (if 0, then not used, otherwise set to 768",default=0)
 parser.add_argument('--hidden_dim',type=int,help="Size of GRU hidden dimension",default=128)
+parser.add_argument('--freeze_plot',action='store_true',help='Flag whether to finetune or not, freeze_plot flag means to not finetune')
 
 
 # file name arguments
@@ -74,6 +75,7 @@ train_method = args.train_method
 hidden_dim = args.hidden_dim
 embedding_dim = args.embedding_dim
 bert_dim= args.bert_dim
+freeze_plot = args.freeze_plot
 
 k = args.hitsat
 max_length = args.max_len
@@ -188,6 +190,9 @@ if train_method != "normal":
 
 elif train_method == "normal":
     optimizer = torch.optim.Adam(model.parameters(),lr=lr,weight_decay=reg)
+    
+if freeze_plot and bert_dim !=0:
+    model.plot_embedding.weight.requires_grad = False
     
 # ------------------ Objective/Metric Initialization ------------# 
 """
