@@ -30,6 +30,8 @@ parser.add_argument('--read_bert_filename',type=str,help='The filename to read a
 
 # model thing ... 
 parser.add_argument('--freeze_plot',action='store_true',help='Flag whether to finetune or not, freeze_plot flag means to not finetune')
+parser.add_argument('--tied',action='store_true',help='Whether to make the output layer weights the embedding layer weights')
+
 
 
 # dataset arguments
@@ -63,17 +65,17 @@ size = args.size
 
 batch_size = args.batch_size
 freeze_plot = args.freeze_plot
+tied = args.tied
 
 train_method_grid = ["alternate","normal"]
-reg_grid = [0,1e-1,1e-2]
-lr_grid = [1e-3,1e-4]
+reg_grid = [0,1e-4,1e-5]
+lr_grid = [5e-3,1e-3,1e-4]
 num_epochs_grid = [50]
 hidden_dim_grid = [256]
 embedding_dim_grid = [256]
 bert_dim_grid = [768,0]
 read_movie_filename_grid = ["",read_movie_filename_]
 
-print(freeze_plot)
 """
 TODO:
 ADD Variable NEEDED
@@ -246,8 +248,12 @@ for read_movie_filename in read_movie_filename_grid:
                                                 inputs,labels,x_lens,uid = data
                                                 outputs = model(x=inputs.cuda(),x_lens=x_lens.squeeze().tolist())
                                     
-                                    
-                                            loss = loss_fn(outputs.view(-1,outputs.size(-1)),labels.view(-1).cuda())
+                                            if tied:
+                                                outputs_ignore_pad = outputs[:,:,:-1]
+                                                loss = loss_fn(outputs_ignore_pad.view(-1,outputs_ignore_pad.size(-1)),labels.view(-1).cuda())
+                                                
+                                            else:
+                                                loss = loss_fn(outputs.view(-1,outputs.size(-1)),labels.view(-1).cuda())
                                     
                                             loss.backward()
                                             
