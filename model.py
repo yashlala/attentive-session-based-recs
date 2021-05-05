@@ -105,12 +105,13 @@ class gru4recF(nn.Module):
         self.max_length = max_length
         self.pad_token = pad_token
         self.pad_genre_token = pad_genre_token
-    
+        
+        self.tied = tied
         self.dropout = dropout
-        self.tied=tied
-    
+        
         if self.tied:
             self.hidden_dim = embedding_dim
+    
         # initialize item-id lookup table
         # add 1 to output dimension because we have to add a pad token
         self.movie_embedding = nn.Embedding(output_dim+1,embedding_dim,padding_idx=pad_token)
@@ -130,10 +131,15 @@ class gru4recF(nn.Module):
             self.genre_embedding = nn.Embedding(genre_dim+1,embedding_dim,padding_idx=pad_genre_token)
 
 
-        self.encoder_layer = nn.GRU(embedding_dim,self.hidden_dim,batch_first=self.batch_first.dropout=self.dropout)
+        self.encoder_layer = nn.GRU(embedding_dim,self.hidden_dim,batch_first=self.batch_first,dropout=self.dropout)
 
         # add 1 to the output dimension because we have to add a pad token
-        self.output_layer = nn.Linear(hidden_dim,output_dim)
+        if not self.tied:
+            self.output_layer = nn.Linear(hidden_dim,output_dim)
+        
+        if self.tied:
+            self.output_layer = nn.Linear(hidden_dim,output_dim+1)
+            self.output_layer.weight = self.movie_embedding.weight
     
     def forward(self,x,x_lens,x_genre=None,pack=True):
         # add the plot embedding and movie embedding
@@ -157,12 +163,8 @@ class gru4recF(nn.Module):
         if pack:
             x, _ = pad_packed_sequence(output_packed, batch_first=self.batch_first,total_length=self.max_length,padding_value=self.pad_token)
             
-        if not self.tied:
-            self.output_layer = nn.Linear(hidden_dim,output_dim)
+        x = self.output_layer(x)
         
-        if self.tied:
-            self.output_layer = nn.Linear(hidden_dim,output_dim+1)
-            self.output_layer.weight = self.movie_embedding.weight
                 
         return x
     
