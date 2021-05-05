@@ -33,7 +33,8 @@ parser.add_argument('--embedding_dim',type=int,help="Size of item embedding",def
 parser.add_argument('--bert_dim',type=int,help="Size of bert embedding (if 0, then not used, otherwise set to 768",default=0)
 parser.add_argument('--hidden_dim',type=int,help="Size of GRU hidden dimension",default=128)
 parser.add_argument('--freeze_plot',action='store_true',help='Flag whether to finetune or not, freeze_plot flag means to not finetune')
-
+parser.add_argument('--tied',action='store_true',help='Whether to make the output layer weights the embedding layer weights')
+parser.add_argument('--dropout',type=float,help='The dropout rate of output layer of GRU',default=0)
 
 # file name arguments
 parser.add_argument('--read_filename',type=str,help='The filename to read all the MovieLens-1 million data from to the Dataframe',default="ml-1m\\ratings.dat")
@@ -76,6 +77,9 @@ hidden_dim = args.hidden_dim
 embedding_dim = args.embedding_dim
 bert_dim= args.bert_dim
 freeze_plot = args.freeze_plot
+tied = args.tied
+args = args.dropout
+
 
 k = args.hitsat
 max_length = args.max_len
@@ -165,15 +169,30 @@ test_dl = DataLoader(test_dataset,batch_size=64)
 # ------------------Model Initialization----------------------#
 
 # initialize gru4rec model with arguments specified earlier
-model = gru4recF(embedding_dim=embedding_dim,
+if concat:
+    model = gru4recFC(embedding_dim=embedding_dim,
+             hidden_dim=hidden_dim,
+             output_dim=output_dim,
+             genre_dim=genre_dim,
+             batch_first=True,
+             max_length=max_length,
+             pad_token=pad_token,
+             pad_genre_token=pad_genre_token,
+             bert_dim=bert_dim,
+             dropout=dropout,
+             tied=tied)
+else:
+    model = gru4recF(embedding_dim=embedding_dim,
          hidden_dim=hidden_dim,
          output_dim=output_dim,
          genre_dim=genre_dim,
          batch_first=True,
-         max_length=200,
+         max_length=max_length,
          pad_token=pad_token,
          pad_genre_token=pad_genre_token,
-         bert_dim=bert_dim)
+         bert_dim=bert_dim,
+         dropout=dropout,
+         tied=tied)
 
 if bert_dim != 0:
     model.init_weight(reset_object,feature_embed)
@@ -229,11 +248,13 @@ for epoch in range(num_epochs):
             inputs,labels,x_lens,uid = data
             outputs = model(x=inputs.cuda(),x_lens=x_lens.squeeze().tolist())
 
+        if tied:
+            outputs_ignore_pad = outputs[:,:,:-1]
+            loss = """ TODO: ADD LOSS"""
+            
+        else:
+            loss = """ TODO: ADD LOSS"""
 
-        """
-        TODO:
-        Add loss = objective function initialized
-        """
 
         loss.backward()
         
