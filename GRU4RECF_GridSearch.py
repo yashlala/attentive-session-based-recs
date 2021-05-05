@@ -185,7 +185,9 @@ for read_movie_filename in read_movie_filename_grid:
                                                  max_length=max_length,
                                                  pad_token=pad_token,
                                                  pad_genre_token=pad_genre_token,
-                                                 bert_dim=bert_dim)
+                                                 bert_dim=bert_dim,
+                                                 dropout=dropout,
+                                                 tied=tied)
                                     else:
                                         model = gru4recF(embedding_dim=embedding_dim,
                                              hidden_dim=hidden_dim,
@@ -195,7 +197,9 @@ for read_movie_filename in read_movie_filename_grid:
                                              max_length=max_length,
                                              pad_token=pad_token,
                                              pad_genre_token=pad_genre_token,
-                                             bert_dim=bert_dim)
+                                             bert_dim=bert_dim,
+                                             dropout=dropout,
+                                             tied=tied)
                                     
                                     if bert_dim != 0:
                                         model.init_weight(reset_object,feature_embed)

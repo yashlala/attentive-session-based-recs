@@ -91,7 +91,7 @@ class gru4recF(nn.Module):
     bert_dim: the dimension of the feature-embedding look-up table
     ... to do add all comments ... 
     """
-    def __init__(self,embedding_dim,hidden_dim,output_dim,genre_dim=0,batch_first=True,max_length=200,pad_token=0,pad_genre_token=0,bert_dim=0,dropout=0):
+    def __init__(self,embedding_dim,hidden_dim,output_dim,genre_dim=0,batch_first=True,max_length=200,pad_token=0,pad_genre_token=0,bert_dim=0,dropout=0,tied=False):
         super(gru4recF,self).__init__()
         
         self.batch_first =batch_first
@@ -107,7 +107,10 @@ class gru4recF(nn.Module):
         self.pad_genre_token = pad_genre_token
     
         self.dropout = dropout
+        self.tied=tied
     
+        if self.tied:
+            self.hidden_dim = embedding_dim
         # initialize item-id lookup table
         # add 1 to output dimension because we have to add a pad token
         self.movie_embedding = nn.Embedding(output_dim+1,embedding_dim,padding_idx=pad_token)
@@ -154,7 +157,12 @@ class gru4recF(nn.Module):
         if pack:
             x, _ = pad_packed_sequence(output_packed, batch_first=self.batch_first,total_length=self.max_length,padding_value=self.pad_token)
             
-        x = self.output_layer(x)
+        if not self.tied:
+            self.output_layer = nn.Linear(hidden_dim,output_dim)
+        
+        if self.tied:
+            self.output_layer = nn.Linear(hidden_dim,output_dim+1)
+            self.output_layer.weight = self.movie_embedding.weight
                 
         return x
     
