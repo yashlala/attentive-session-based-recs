@@ -66,7 +66,7 @@ freeze_plot = args.freeze_plot
 
 train_method_grid = ["alternate","normal"]
 reg_grid = [0,1e-1,1e-2]
-lr_grid = [1e-2,1e-3,1e-4]
+lr_grid = [1e-3,1e-4]
 num_epochs_grid = [50]
 hidden_dim_grid = [256]
 embedding_dim_grid = [256]
@@ -226,7 +226,7 @@ for read_movie_filename in read_movie_filename_grid:
                                     max_test_hit = 0
                                     
                                     time_optimize=time()
-                                    for epoch in tqdm(range(num_epochs),position=0,leave=True):                                        
+                                    for epoch in range(num_epochs):                                        
                                         model.train()  
                                                                         
                                         for j,data in enumerate(train_dl):
