@@ -31,6 +31,7 @@ parser.add_argument('--read_bert_filename',type=str,help='The filename to read a
 # model thing ... 
 parser.add_argument('--freeze_plot',action='store_true',help='Flag whether to finetune or not, freeze_plot flag means to not finetune')
 parser.add_argument('--tied',action='store_true',help='Whether to make the output layer weights the embedding layer weights')
+parser.add_argument('--dropout',type=float,help='The dropout rate of output layer of GRU',default=0)
 
 
 
@@ -66,6 +67,7 @@ size = args.size
 batch_size = args.batch_size
 freeze_plot = args.freeze_plot
 tied = args.tied
+args = args.dropout
 
 train_method_grid = ["alternate","normal"]
 reg_grid = [0,1e-4,1e-5]
