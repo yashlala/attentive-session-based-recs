@@ -281,9 +281,9 @@ for read_movie_filename in read_movie_filename_grid:
                                             elif train_method == "normal":
                                                 optimizer.step()
                                                 
-                                        training_hit = Recall_Object(model,train_dl)
-                                        validation_hit = Recall_Object(model,val_dl)
-                                        testing_hit = Recall_Object(model,test_dl)
+                                        training_hit = Recall_Object(model,train_dl,"train")
+                                        validation_hit = Recall_Object(model,val_dl,"validation")
+                                        testing_hit = Recall_Object(model,test_dl,"test")
                                         
                                         if max_val_hit < validation_hit:
                                             max_val_hit = validation_hit
