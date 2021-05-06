@@ -67,7 +67,7 @@ size = args.size
 batch_size = args.batch_size
 freeze_plot = args.freeze_plot
 tied = args.tied
-args = args.dropout
+dropout = args.dropout
 
 train_method_grid = ["alternate","normal"]
 reg_grid = [0,1e-4,1e-5]
