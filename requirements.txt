@@ -1,177 +1,71 @@
-absl-py==0.9.0
-argon2-cffi==20.1.0
-astor==0.8.1
-atomicwrites==1.4.0
-attrs==19.3.0
-backcall==0.2.0
-beautifulsoup4==4.9.1
-bleach==3.1.5
-blinker==1.4
-blis==0.4.1
-bokeh @ file:///C:/ci/bokeh_1598885504939/work
-boto==2.49.0
-boto3==1.9.66
-botocore==1.12.67
-Bottleneck==1.3.2
-brotlipy==0.7.0
-cachetools @ file:///tmp/build/80754af9/cachetools_1596822027882/work
-catalogue==1.0.0
-certifi==2020.12.5
-cffi==1.14.0
-chardet==3.0.4
-click==7.1.2
-colorama==0.4.3
-cryptography==2.9.2
-cycler==0.10.0
-cymem==2.0.3
-Cython==0.29.14
-decorator==4.4.2
-defusedxml==0.6.0
-docutils==0.16
-en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-2.3.1/en_core_web_sm-2.3.1.tar.gz
-entrypoints==0.3
-fastai==1.0.61
-fastprogress @ file:///home/jhoward/anaconda3/conda-bld/fastprogress_1597927594295/work
-ffmpeg-python==0.2.0
-filelock==3.0.12
-funcy @ file:///home/conda/feedstock_root/build_artifacts/funcy_1601143499053/work
-future==0.18.2
-gast==0.2.2
-gensim==4.0.0b0
-google-api-core @ file:///C:/ci/google-api-core-split_1594356932141/work
-google-auth @ file:///tmp/build/80754af9/google-auth_1596863485713/work
-google-auth-oauthlib==0.4.1
-google-cloud-core==1.3.0
-google-cloud-storage @ file:///tmp/build/80754af9/google-cloud-storage_1594357999796/work
-google-pasta==0.2.0
-google-resumable-media @ file:///tmp/build/80754af9/google-resumable-media_1594358346190/work
-googleapis-common-protos==1.52.0
-grpcio @ file:///C:/ci/grpcio_1597406403308/work
-h5py==2.10.0
-idna @ file:///tmp/build/80754af9/idna_1593446292537/work
-imageio==2.9.0
-importlib-metadata @ file:///C:/ci/importlib-metadata_1593446525189/work
-iniconfig==1.1.1
-ipykernel @ file:///C:/ci/ipykernel_1596208728219/work/dist/ipykernel-5.3.4-py3-none-any.whl
-ipython @ file:///C:/ci/ipython_1596868620883/work
-ipython-genutils==0.2.0
-ipywidgets==7.5.1
-jedi @ file:///C:/ci/jedi_1596472767194/work
-Jinja2==2.11.2
-jmespath @ file:///tmp/build/80754af9/jmespath_1594304593830/work
-joblib @ file:///tmp/build/80754af9/joblib_1594236160679/work
-jsonschema==3.0.2
-jupyter==1.0.0
-jupyter-client @ file:///tmp/build/80754af9/jupyter_client_1594826976318/work
-jupyter-console==6.1.0
-jupyter-core==4.6.3
-Keras==2.3.1
-Keras-Applications @ file:///tmp/build/80754af9/keras-applications_1594366238411/work
-Keras-Preprocessing==1.1.0
-kiwisolver==1.2.0
-Mako @ file:///home/conda/feedstock_root/build_artifacts/mako_1595925083607/work
-Markdown @ file:///C:/ci/markdown_1597415185889/work
-MarkupSafe==1.1.1
-matplotlib @ file:///C:/ci/matplotlib-base_1592846084747/work
-mistune==0.8.4
-mkl-fft==1.1.0
-mkl-random==1.1.1
-mkl-service==2.3.0
-murmurhash==1.0.2
-nbconvert==5.6.1
-nbformat==5.0.7
-networkx==2.5
-nltk @ file:///tmp/build/80754af9/nltk_1592496090529/work
-notebook==6.1.3
-numexpr==2.7.1
-numpy @ file:///C:/ci/numpy_and_numpy_base_1596233945180/work
-nvidia-ml-py3==7.352.0
-oauthlib==3.1.0
-olefile==0.46
-opt-einsum==3.1.0
-packaging==20.4
-pandas @ file:///C:/ci/pandas_1596824386248/work
-pandocfilters==1.4.2
-parso==0.7.0
-patsy==0.5.1
-pickleshare @ file:///C:/ci/pickleshare_1594374056827/work
-Pillow @ file:///C:/ci/pillow_1594298234712/work
-plac @ file:///C:/ci/plac_1594257364512/work
-pluggy==0.13.1
-preshed==3.0.2
-prometheus-client==0.8.0
-prompt-toolkit==3.0.5
-protobuf==3.12.4
-py==1.9.0
-pyasn1==0.4.8
-pyasn1-modules==0.2.8
-pybind11==2.5.0
-pycparser @ file:///tmp/build/80754af9/pycparser_1594388511720/work
-Pygments==2.6.1
-pygpu==0.7.6
-PyJWT==1.7.1
-pyLDAvis==2.1.2
-pyOpenSSL @ file:///tmp/build/80754af9/pyopenssl_1594392929924/work
-pyparsing==2.4.7
-pyreadline==2.1
-pyrsistent==0.16.0
-PySocks @ file:///C:/ci/pysocks_1594394709107/work
-pytest==6.1.1
-python-dateutil==2.8.1
-pytz==2020.1
-pywin32==227
-pywinpty==0.5.7
-PyYAML==5.3.1
-pyzmq==19.0.1
-qtconsole==4.7.6
-QtPy==1.9.0
-regex @ file:///C:/ci/regex_1596827857056/work
-requests @ file:///tmp/build/80754af9/requests_1592841827918/work
-requests-oauthlib==1.3.0
-rsa @ file:///tmp/build/80754af9/rsa_1596998415516/work
-s3transfer==0.1.13
-sacremoses==0.0.43
-scikit-learn @ file:///C:/ci/scikit-learn_1592847564598/work
-scikit-surprise==1.1.1
-scipy @ file:///C:/ci/scipy_1592916958183/work
-seaborn==0.10.1
-Send2Trash==1.5.0
-sentencepiece==0.1.91
-six==1.15.0
-smart-open @ file:///tmp/build/80754af9/smart_open_1594236772807/work
-soupsieve==2.0.1
-spacy==2.3.2
-srsly==1.0.2
-statsmodels==0.12.0
-tensorboard==2.3.0
-tensorboard-plugin-wit==1.6.0
-tensorflow==2.0.0
-tensorflow-estimator==2.3.0
-termcolor==1.1.0
-terminado==0.8.3
-testpath==0.4.4
-Theano @ file:///D:/bld/theano_1595878385468/work
-thinc==7.4.1
-threadpoolctl @ file:///tmp/tmp9twdgx9k/threadpoolctl-2.1.0-py3-none-any.whl
-tokenizers==0.8.1rc2
-toml==0.10.1
-torch==1.2.0
-torchtext==0.6.0
-torchvision==0.4.0
-tornado==6.0.4
-tqdm @ file:///tmp/build/80754af9/tqdm_1596810128862/work
-traitlets==4.3.3
-transformers==3.1.0
-typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1598376058250/work
-urllib3==1.25.9
-wasabi @ file:///tmp/build/80754af9/wasabi_1597087387881/work
-wcwidth @ file:///tmp/build/80754af9/wcwidth_1593447189090/work
-webencodings==0.5.1
-Werkzeug==0.16.1
-widgetsnbextension==3.5.1
-win-inet-pton==1.1.0
-wincertstore==0.2
-wrapt==1.12.1
-xgboost==1.2.0
-xlrd==1.2.0
-zipp==3.1.0
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: linux-64
+_libgcc_mutex=0.1=main
+_pytorch_select=0.1=cpu_0
+blas=1.0=mkl
+brotlipy=0.7.0=py38h27cfd23_1003
+ca-certificates=2021.4.13=h06a4308_1
+certifi=2020.12.5=py38h06a4308_0
+cffi=1.14.5=py38h261ae71_0
+chardet=4.0.0=py38h06a4308_1003
+click=7.1.2=pyhd3eb1b0_0
+cryptography=3.4.7=py38hd23ed53_0
+dataclasses=0.8=pyh6d0b6a4_7
+filelock=3.0.12=pyhd3eb1b0_1
+huggingface_hub=0.0.8=py_0
+idna=2.10=pyhd3eb1b0_0
+importlib-metadata=3.10.0=py38h06a4308_0
+importlib_metadata=3.10.0=hd3eb1b0_0
+intel-openmp=2019.4=243
+joblib=1.0.1=pyhd3eb1b0_0
+ld_impl_linux-64=2.33.1=h53a641e_7
+libffi=3.3=he6710b0_2
+libgcc-ng=9.1.0=hdf63c60_0
+libgfortran-ng=7.3.0=hdf63c60_0
+libmklml=2019.0.5=0
+libprotobuf=3.14.0=h8c45485_0
+libstdcxx-ng=9.1.0=hdf63c60_0
+mkl=2020.2=256
+mkl-service=2.3.0=py38he904b0f_0
+mkl_fft=1.3.0=py38h54f3939_0
+mkl_random=1.1.1=py38h0573a6f_0
+ncurses=6.2=he6710b0_1
+ninja=1.10.2=hff7bd54_1
+numpy=1.19.2=py38h54aff64_0
+numpy-base=1.19.2=py38hfa32c7d_0
+openssl=1.1.1k=h27cfd23_0
+packaging=20.9=pyhd3eb1b0_0
+pandas=1.2.4=py38h2531618_0
+pip=21.0.1=py38h06a4308_0
+protobuf=3.14.0=py38h2531618_1
+pycparser=2.20=py_2
+pyopenssl=20.0.1=pyhd3eb1b0_1
+pyparsing=2.4.7=pyhd3eb1b0_0
+pysocks=1.7.1=py38h06a4308_0
+python=3.8.8=hdb3f193_5
+python-dateutil=2.8.1=pyhd3eb1b0_0
+python_abi=3.8=1_cp38
+pytorch=1.7.1=cpu_py38h6a09485_0
+pytz=2021.1=pyhd3eb1b0_0
+readline=8.1=h27cfd23_0
+regex=2021.4.4=py38h27cfd23_0
+requests=2.25.1=pyhd3eb1b0_0
+sacremoses=master=py_0
+scikit-learn=0.24.1=py38ha9443f7_0
+scipy=1.6.2=py38h91f5cce_0
+setuptools=52.0.0=py38h06a4308_0
+six=1.15.0=py38h06a4308_0
+sqlite=3.35.4=hdfb4753_0
+threadpoolctl=2.1.0=pyh5ca1d4c_0
+tk=8.6.10=hbc83047_0
+tokenizers=0.10.2=py38_0
+tqdm=4.59.0=pyhd3eb1b0_1
+transformers=4.5.1=py_0
+typing-extensions=3.7.4.3=hd3eb1b0_0
+typing_extensions=3.7.4.3=pyh06a4308_0
+urllib3=1.26.4=pyhd3eb1b0_0
+wheel=0.36.2=pyhd3eb1b0_0
+xz=5.2.5=h7b6447c_0
+zipp=3.4.1=pyhd3eb1b0_0
+zlib=1.2.11=h7b6447c_3
