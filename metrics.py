@@ -22,7 +22,8 @@ class Recall_E_prob(object):
         self.p = df.groupby('item_id',sort='item_id').size()
         self.p = self.p.values / self.p.sum()
             
-    def __call__(self,model,dataloader):
+        
+    def __call__(self,model,dataloader,mode="train"):
         
         model.eval()
         with torch.no_grad():
@@ -40,6 +41,15 @@ class Recall_E_prob(object):
                                 
                 for i,uid in enumerate(uid.squeeze()):
                     history = self.user_history[uid.item()]
+                    
+                    if mode == "train":
+                        history = set(history[:-2])
+                    
+                    if mode == "validation":
+                        history = set(history[:-1])
+                        
+                    if mode == "test":
+                        history = set(history)
                         
                     sample_negatives = []
                     
