@@ -76,7 +76,7 @@ num_epochs_grid = [50]
 hidden_dim_grid = [256]
 embedding_dim_grid = [256]
 bert_dim_grid = [768,0]
-read_movie_filename_grid = ["",read_movie_filename_]
+read_movie_filename_grid = [read_movie_filename_]#["",read_movie_filename_]
 
 """
 TODO:

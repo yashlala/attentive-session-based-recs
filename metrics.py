@@ -25,8 +25,8 @@ class Recall_E_prob(object):
         
     def __call__(self,model,dataloader,mode="train"):
         
-        model.eval()
         with torch.no_grad():
+            model.eval()
             
             total_hits = 0 
             for data in dataloader:
@@ -64,12 +64,13 @@ class Recall_E_prob(object):
                     sample_negatives.append(labels[i,x_lens[i].item()-1].item())
                                         
                     topk_items = outputs[i,x_lens[i].item()-1,sample_negatives].argsort(0,descending=True)[:self.k]
-                    total_hits += torch.sum(topk_items == 100).cpu().item() 
+                    total_hits += torch.sum(topk_items == 100).item() 
                     
-
-                #torch.cuda.empty_cache()
+            del outputs
+            del topk_items
+            torch.cuda.empty_cache()
                 
-        return total_hits/self.n_users*100
+            return total_hits/self.n_users*100
     
     def popular_baseline(self):
         total_hits = 0 

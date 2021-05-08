@@ -203,9 +203,9 @@ class gru4recFC(nn.Module):
         self.tied = tied
         
         self.dropout = dropout
-    
         if self.tied:
             self.hidden_dim = embedding_dim
+            
         # initialize item-id lookup table
         # add 1 to output dimension because we have to add a pad token
         self.movie_embedding = nn.Embedding(output_dim+1,embedding_dim,padding_idx=pad_token)
@@ -220,8 +220,10 @@ class gru4recFC(nn.Module):
         
         if genre_dim != 0:
             self.genre_embedding = nn.Embedding(genre_dim+1,embedding_dim,padding_idx=pad_genre_token)
-
-        self.projection_layer = nn.Linear(bert_dim+embedding_dim+genre_dim,embedding_dim)
+            self.projection_layer = nn.Linear(bert_dim+embedding_dim+embedding_dim,embedding_dim)
+        
+        else:
+            self.projection_layer = nn.Linear(bert_dim+embedding_dim,embedding_dim)
         
         self.encoder_layer = nn.GRU(embedding_dim,self.hidden_dim,batch_first=self.batch_first,dropout=self.dropout)
 
