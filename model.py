@@ -301,7 +301,91 @@ class gru4recFC(nn.Module):
                 continue
             item_id = reset_object.item_enc.transform([item_id]).item()
             self.plot_embedding.weight.data[item_id,:] = torch.DoubleTensor(embedding)
+       
+class gru4rec_conv(nn.Module):
+    """
+    embedding dim: the dimension of the item-embedding look-up table
+    hidden_dim: the dimension of the hidden state of the GRU-RNN
+    batch_first: whether the batch dimension should be the first dimension of input to GRU-RNN
+    output_dim: the output dimension of the last fully connected layer
+    max_length: the maximum session length for any user, used for packing/padding input to GRU-RNN
+    pad_token: the value that pad tokens should be set to for GRU-RNN and item embedding
+    bert_dim: the dimension of the feature-embedding look-up table
+    ... to do add all comments ... 
+    """
+    def __init__(self,embedding_dim,
+                 hidden_dim,
+                 output_dim,
+                 batch_first=True,
+                 max_length=200,
+                 pad_token=0,
+                 dropout=0,
+                 window=3,
+                 tied=False):
+        
+        super(gru4rec_conv,self).__init__()
+        
+        self.batch_first =batch_first
+        
+        self.embedding_dim = embedding_dim
+        self.hidden_dim =hidden_dim
+        self.output_dim =output_dim
+        self.window = window
+        self.conv_embed = int(embedding_dim//2)
+
+        self.max_length = max_length
+        self.pad_token = pad_token
+        
+        self.tied = tied
+        self.dropout = dropout
+        
+        self.genre_dim = 0
+        self.bert_dim = 0
+        
+        if self.tied:
+            self.hidden_dim = embedding_dim
+    
+        # initialize item-id lookup table
+        # add 1 to output dimension because we have to add a pad token
+        self.movie_embedding = nn.Embedding(output_dim+1,embedding_dim,padding_idx=pad_token)
+        
             
+        # project plot embedding to same dimensionality as movie embedding
+        self.projection = nn.Conv1d(self.embedding_dim,self.conv_embed,self.window)
+
+        self.encoder_layer = nn.GRU(self.conv_embed,self.hidden_dim,batch_first=self.batch_first,dropout=self.dropout)
+
+        # add 1 to the output dimension because we have to add a pad token
+        if not self.tied:
+            self.output_layer = nn.Linear(hidden_dim,output_dim)
+        
+        if self.tied:
+            self.output_layer = nn.Linear(hidden_dim,output_dim+1)
+            self.output_layer.weight = self.movie_embedding.weight
+    
+    def forward(self,x,x_lens,x_genre=None,pack=True):
+        # add the plot embedding and movie embedding
+        # do I add non-linearity or not? ... 
+        # concatenate or not? ...
+        # many questions ...
+        
+        x = self.movie_embedding(x).permute(0,2,1)
+        x = F.pad(x,pad=(self.window-1,0),mode='constant')
+        x = self.projection(x).permute(0,2,1)
+        x = F.leaky_relu(x)
+                    
+        if pack:
+            x = pack_padded_sequence(x,x_lens,batch_first=True,enforce_sorted=False)
+        
+        output_packed,_ = self.encoder_layer(x)        
+        
+        if pack:
+            x, _ = pad_packed_sequence(output_packed, batch_first=self.batch_first,total_length=self.max_length,padding_value=self.pad_token)
+            
+        x = self.output_layer(x)
+        
+                
+        return x
             
 class gru4rec_vanilla(nn.Module):
     """
@@ -347,6 +431,7 @@ class gru4rec_vanilla(nn.Module):
 
         if self.embedding_dim == 0:
             self.encoder_layer = nn.GRU(output_dim+1,self.hidden_dim,batch_first=self.batch_first)
+            
         elif self.embedding_dim != 0:
             self.encoder_layer = nn.GRU(self.embedding_dim,self.hidden_dim,batch_first=self.batch_first)
 
