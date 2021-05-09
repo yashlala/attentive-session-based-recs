@@ -57,7 +57,13 @@ class NextItNet(nn.Module):
     """
 
     """
-    def __init__(self,embedding_dim,output_dim,max_len,hidden_layers=2,dilations=[1,2,4,8],pad_token=0):
+    def __init__(self,embedding_dim,
+                 output_dim,
+                 max_len,
+                 hidden_layers=2,
+                 dilations=[1,2,4,8],
+                 pad_token=0):
+        
         super(NextItNet,self).__init__()
         self.embedding_dim = embedding_dim
         self.channel = embedding_dim
@@ -91,7 +97,18 @@ class gru4recF(nn.Module):
     bert_dim: the dimension of the feature-embedding look-up table
     ... to do add all comments ... 
     """
-    def __init__(self,embedding_dim,hidden_dim,output_dim,genre_dim=0,batch_first=True,max_length=200,pad_token=0,pad_genre_token=0,bert_dim=0,dropout=0,tied=False):
+    def __init__(self,embedding_dim,
+                 hidden_dim,
+                 output_dim,
+                 genre_dim=0,
+                 batch_first=True,
+                 max_length=200,
+                 pad_token=0,
+                 pad_genre_token=0,
+                 bert_dim=0,
+                 dropout=0,
+                 tied=False):
+        
         super(gru4recF,self).__init__()
         
         self.batch_first =batch_first
@@ -126,7 +143,7 @@ class gru4recF(nn.Module):
             
             # project plot embedding to same dimensionality as movie embedding
             self.plot_projection = nn.Linear(bert_dim,embedding_dim)
-        
+                    
         if genre_dim != 0:
             self.genre_embedding = nn.Embedding(genre_dim+1,embedding_dim,padding_idx=pad_genre_token)
 
@@ -147,9 +164,9 @@ class gru4recF(nn.Module):
         # concatenate or not? ...
         # many questions ...
         if (self.bert_dim != 0) and (self.genre_dim != 0):
-            x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding(x)) + self.genre_embedding(x_genre).sum(2)
+            x = self.movie_embedding(x) + self.plot_projection(F.leaky_relu(self.plot_embedding(x))) + self.genre_embedding(x_genre).sum(2)
         elif (self.bert_dim != 0) and (self.genre_dim == 0):
-            x = self.movie_embedding(x) + self.plot_projection(self.plot_embedding(x)) 
+            x = self.movie_embedding(x) + self.plot_projection(F.leaky_relu(self.plot_embedding(x)))
         elif (self.bert_dim == 0) and (self.genre_dim != 0):
             x = self.movie_embedding(x) + self.genre_embedding(x_genre).sum(2)
         else:
@@ -186,7 +203,17 @@ class gru4recFC(nn.Module):
     bert_dim: the dimension of the feature-embedding look-up table
     ... to do add all comments ... 
     """
-    def __init__(self,embedding_dim,hidden_dim,output_dim,genre_dim=0,batch_first=True,max_length=200,pad_token=0,pad_genre_token=0,bert_dim=0,tied=False,dropout=0):
+    def __init__(self,embedding_dim,
+                 hidden_dim,
+                 output_dim,
+                 genre_dim=0,
+                 batch_first=True,
+                 max_length=200,
+                 pad_token=0,
+                 pad_genre_token=0,
+                 bert_dim=0,
+                 tied=False,dropout=0):
+        
         super(gru4recFC,self).__init__()
         
         self.batch_first =batch_first
@@ -250,7 +277,10 @@ class gru4recFC(nn.Module):
         else:
             x = self.movie_embedding(x)
         
+        x = F.leaky_relu(x)
+        
         x = self.projection_layer(x)
+        
         x = F.leaky_relu(x)
                     
         if pack:
@@ -277,38 +307,69 @@ class gru4rec_vanilla(nn.Module):
     """
     ... to do add all comments ... 
     """
-    def __init__(self,hidden_dim,output_dim,batch_first=True,max_length=200,pad_token=0):
+    def __init__(self,hidden_dim,
+                 output_dim,
+                 batch_first=True,
+                 max_length=200,
+                 pad_token=0,
+                 tied=False,
+                 embedding_dim=0):
+        
         super(gru4rec_vanilla,self).__init__()
         
         self.batch_first =batch_first
         
         self.hidden_dim =hidden_dim
         self.output_dim =output_dim
+        self.embedding_dim = embedding_dim
 
         self.max_length = max_length
         self.pad_token = pad_token
         
         self.genre_dim = 0
         self.bert_dim = 0
+        
+        self.tied = tied
+        self.embedding_dim = embedding_dim
+    
+        if self.tied:
+            self.hidden_dim = embedding_dim
     
         # initialize item-id lookup table as one hot vector
-        self.movie_embedding = torch.eye(output_dim+1).cuda()
+        if self.embedding_dim == 0:
+            self.movie_embedding = torch.eye(output_dim+1).cuda()
+            
+        elif self.embedding_dim != 0:
+            self.movie_embedding = nn.Embedding(output_dim+1,embedding_dim,padding_idx=pad_token)
         
         #  initialize plot lookup table
         # add 1 to output dimensino because we have to add a pad token
 
-        self.encoder_layer = nn.GRU(output_dim+1,self.hidden_dim,batch_first=self.batch_first)
+        if self.embedding_dim == 0:
+            self.encoder_layer = nn.GRU(output_dim+1,self.hidden_dim,batch_first=self.batch_first)
+        elif self.embedding_dim != 0:
+            self.encoder_layer = nn.GRU(self.embedding_dim,self.hidden_dim,batch_first=self.batch_first)
+
 
         # add 1 to the output dimension because we have to add a pad token
-        self.output_layer = nn.Linear(hidden_dim,output_dim)
+        if not self.tied:
+            self.output_layer = nn.Linear(hidden_dim,output_dim)
+        
+        if self.tied:
+            self.output_layer = nn.Linear(hidden_dim,output_dim+1)
+            self.output_layer.weight = self.movie_embedding.weight
     
     def forward(self,x,x_lens,x_genre=None,pack=True):
         # add the plot embedding and movie embedding
         # do I add non-linearity or not? ... 
         # concatenate or not? ...
         # many questions ...
-
-        x = self.movie_embedding[x]
+        
+        if self.embedding_dim == 0:
+            x = self.movie_embedding[x]
+            
+        elif self.embedding_dim != 0:
+            x = self.movie_embedding(x)
                     
         if pack:
             x = pack_padded_sequence(x,x_lens,batch_first=True,enforce_sorted=False)
@@ -333,7 +394,13 @@ class gru4rec_feature(nn.Module):
     bert_dim: the dimension of the feature-embedding look-up table
     ... to do add all comments ... 
     """
-    def __init__(self,hidden_dim,output_dim,batch_first=True,max_length=200,pad_token=0,bert_dim=0):
+    def __init__(self,hidden_dim,
+                 output_dim,
+                 batch_first=True,
+                 max_length=200,
+                 pad_token=0,
+                 bert_dim=0):
+        
         super(gru4rec_feature,self).__init__()
         
         self.batch_first =batch_first
