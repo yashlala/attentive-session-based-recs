@@ -71,6 +71,8 @@ class NextItNet(nn.Module):
         self.pad_token = pad_token
         self.max_len = max_len
     
+        self.genre_dim = 0
+        self.bert_dim = 0
     
         self.item_embedding = nn.Embedding(output_dim+1,embedding_dim,padding_idx=pad_token)
         
@@ -79,7 +81,7 @@ class NextItNet(nn.Module):
         self.final_layer = nn.Linear(embedding_dim, output_dim)
 
     
-    def forward(self,x):
+    def forward(self,x,x_lens=None):
         x = self.item_embedding(x).permute(0,2,1)
         x = self.hidden_layers(x)
         x = self.final_layer(x.permute(0,2,1))
