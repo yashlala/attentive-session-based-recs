@@ -49,7 +49,7 @@ parser.add_argument('--min_len',type=int,help="Minimum session length for a sequ
 parser.add_argument('--size',type=str,help='The dataset (1m , 20m , etc) which you will use',default="20m")
 
 
-
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 """
 TODO:
@@ -197,7 +197,7 @@ else:
 if bert_dim != 0:
     model.init_weight(reset_object,feature_embed)
     
-model = model.cuda()
+model = model.to(device)
 
 # initialize Adam optimizer with gru4rec model parameters
 if train_method != "normal":
@@ -242,11 +242,11 @@ for epoch in range(num_epochs):
         
         if genre_dim != 0:            
             inputs,genre_inputs,labels,x_lens,uid = data
-            outputs = model(x=inputs.cuda(),x_lens=x_lens.squeeze().tolist(),x_genre=genre_inputs.cuda())
+            outputs = model(x=inputs.to(device),x_lens=x_lens.squeeze().tolist(),x_genre=genre_inputs.to(device))
         
         else:
             inputs,labels,x_lens,uid = data
-            outputs = model(x=inputs.cuda(),x_lens=x_lens.squeeze().tolist())
+            outputs = model(x=inputs.to(device),x_lens=x_lens.squeeze().tolist())
 
         if tied:
             outputs_ignore_pad = outputs[:,:,:-1]

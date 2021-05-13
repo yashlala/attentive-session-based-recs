@@ -399,7 +399,8 @@ class gru4rec_vanilla(nn.Module):
                  max_length=200,
                  pad_token=0,
                  tied=False,
-                 embedding_dim=0):
+                 embedding_dim=0,
+                 device='cpu'):
         
         super(gru4rec_vanilla,self).__init__()
         
@@ -423,7 +424,7 @@ class gru4rec_vanilla(nn.Module):
     
         # initialize item-id lookup table as one hot vector
         if self.embedding_dim == 0:
-            self.movie_embedding = torch.eye(output_dim+1).cuda()
+            self.movie_embedding = torch.eye(output_dim+1).to(device)
             
         elif self.embedding_dim != 0:
             self.movie_embedding = nn.Embedding(output_dim+1,embedding_dim,padding_idx=pad_token)

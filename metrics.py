@@ -12,7 +12,7 @@ import torch.nn.functional as F
 
     
 class Recall_E_prob(object):
-    def __init__(self,df,user_history,n_users,n_items,k=10):
+    def __init__(self,df,user_history,n_users,n_items,k=10,device='cpu'):
         print("="*10,"Creating Hit@{:d} Metric Object".format(k),"="*10)
 
         self.user_history = user_history
@@ -23,6 +23,8 @@ class Recall_E_prob(object):
          # get the number of times each item id was clicked across all users
         self.p = df.groupby('item_id',sort='item_id').size()
         self.p = self.p.values / self.p.sum()
+        
+        self.device=device
             
         
     def __call__(self,model,dataloader,mode="train"):
@@ -35,11 +37,11 @@ class Recall_E_prob(object):
                 
                 if model.genre_dim != 0:            
                     inputs,genre_inputs,labels,x_lens,uid = data
-                    outputs = model(x=inputs.cuda(),x_lens=x_lens.squeeze().tolist(),x_genre=genre_inputs.cuda())
+                    outputs = model(x=inputs.to(self.device),x_lens=x_lens.squeeze().tolist(),x_genre=genre_inputs.to(self.device))
             
                 else:
                     inputs,labels,x_lens,uid = data
-                    outputs = model(x=inputs.cuda(),x_lens=x_lens.squeeze().tolist())
+                    outputs = model(x=inputs.to(self.device),x_lens=x_lens.squeeze().tolist())
                                 
                 for i,uid in enumerate(uid.squeeze()):
                     history = self.user_history[uid.item()]
