@@ -157,20 +157,28 @@ class BPRLossWithNoClick(nn.Module):
         
         accumulator = torch.FloatTensor([0.]).to(self.device)
         for i, uid in enumerate(uids.squeeze()):
+            all_indices = output[i, :x_lens[i].item(), :]
             
-            positive_scores = output[i, :x_lens[i].item(), labels[i][:x_lens[i].item()]].unsqueeze(2)
+            positive_scores = torch.gather(all_indices, dim=1, index=labels[i][:x_lens[i].item()].unsqueeze(1))
             
             # sampling with replacement (TODO: might need someone to check me on this)
-            negative_item_ids = np.random.choice(self.user_noclick[uid.item()][0], 
-                                                 size=(x_lens[i].item(), self.samples), 
-                                                 p=self.user_noclick[uid.item()][1])
+            # normalize 
             
-            negative_scores = output[i, :x_lens[i].item(), negative_item_ids]
+            negative_item_ids = np.random.choice(self.user_noclick[uid.item()][0][:-2], 
+                                                 size=(x_lens[i].item(), self.samples), 
+                                                 p=self.user_noclick[uid.item()][1][:-2]/ np.sum(self.user_noclick[uid.item()][1][:-2]))
+            
+            negative_scores = torch.gather(all_indices, 
+                                           dim=1, 
+                                           index=torch.LongTensor(negative_item_ids).to(self.device))
+            
+            
+            # negative_scores = output[i, :x_lens[i].item(), negative_item_ids]
             
             difference = positive_scores - negative_scores
             
             # TODO: someone check if i need to actually take a mean of columns then of rows or altogether?
-            accumulator += -torch.mean(F.logsigmoid(difference))
+            accumulator += -torch.mean(torch.sum(F.logsigmoid(difference), dim=1))
         
         return accumulator
 
