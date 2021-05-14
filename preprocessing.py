@@ -388,7 +388,7 @@ def create_user_noclick(user_history,df,n_items):
         item_counts_subset = item_counts[no_clicks]
         
         # normalize to get probabilities (more popular items have higher probability)
-        probabilities = ( item_counts_subset/item_counts_subset.sum() ).values
+        probabilities = (item_counts_subset).values
 
         # assign the tuple of no click list and corresponding probabilities to the respective user id key
         user_noclick[uid] = (no_clicks,probabilities)

@@ -31,6 +31,8 @@ class Recall_E_prob(object):
         
         with torch.no_grad():
             model.eval()
+
+            MRR_count = 0
             
             total_hits = 0 
             for data in dataloader:
@@ -69,15 +71,32 @@ class Recall_E_prob(object):
                                         
                     topk_items = outputs[i,x_lens[i].item()-1,sample_negatives].argsort(0,descending=True)[:self.k]
                     total_hits += torch.sum(topk_items == 100).item() 
+
+                    # TODO: check how we do this, this is getting us an error
+                    # addin MRR
+                    topk_items = outputs[i,x_lens[i].item()-1,:].argsort(0,descending=True)[:self.k]
+                    hits = (topk_items == labels[i, x_lens[i].item() - 1]).nonzero()
+                    ranks = hits + 1
+                    recip_rank = torch.reciprocal(ranks)
+                    # mrr = torch.sum(recip_rank).item() / labels[i].size(0)
+                    
+                    
+                    MRR_count += recip_rank.item()
+
+                    del hits
+                    del ranks
+                    del recip_rank
                     
             del outputs
             del topk_items
-            torch.cuda.empty_cache()
+            if self.device.type == 'cuda':
+                torch.cuda.empty_cache()
                 
-            return total_hits/self.n_users*100
+            return total_hits/self.n_users*100, MRR_count/self.n_users
     
     def popular_baseline(self):
         total_hits = 0 
+        MRR_count = 0
 
         for i,uid in enumerate(range(self.n_users)):
             history = self.user_history[uid]
@@ -96,8 +115,17 @@ class Recall_E_prob(object):
                                 
             topk_items = self.p[np.array(sample_negatives)].argsort()[-self.k:]
             total_hits += np.sum(topk_items == 100).item() 
+
+            # addin MRR
+            # TODO: check how we do this, this is getting us an error
+            topk_items = self.p.argsort()[::-1]
+            hits = (topk_items == self.user_history[uid][-2]).nonzero()
+            ranks = hits[0]+ 1
+            recip_rank = 1 / ranks.sum() if ranks.sum() != 0 else 0
+
+            MRR_count += recip_rank
                         
-        return total_hits/self.n_users*100
+        return total_hits/self.n_users*100, MRR_count/self.n_users
 
 
 class BPRLossWithNoClick(nn.Module):
@@ -147,66 +175,66 @@ class BPRLossWithNoClick(nn.Module):
         return accumulator
 
 
-class MRR(object):
-    """
-    heavily inspired from this place
-    https://github.com/hungthanhpham94/GRU4REC-pytorch/blob/master/lib/metric.py
-    """
-    def __init__(self, device: torch.device, k=10):
-        """
-        seems like the only thing we need to keep track of is the device
-        and the @hits
-        """
-        print("="*10,"Creating MRR@{:d} Metric Object".format(k),"="*10)
-        self.device = device
-        self.number = k
+# class MRR(object):
+#     """
+#     heavily inspired from this place
+#     https://github.com/hungthanhpham94/GRU4REC-pytorch/blob/master/lib/metric.py
+#     """
+#     def __init__(self, device: torch.device, k=10):
+#         """
+#         seems like the only thing we need to keep track of is the device
+#         and the @hits
+#         """
+#         print("="*10,"Creating MRR@{:d} Metric Object".format(k),"="*10)
+#         self.device = device
+#         self.number = k
         
         
-    def __call__(self, model, dataloader):
-        """
-        only requires the labels since that seems the only thing it needs for calculation
+#     def __call__(self, model, dataloader):
+#         """
+#         only requires the labels since that seems the only thing it needs for calculation
 
-        BEWARE: implementation needs improvement or shouldn't be called on large dataloaders
-        """
+#         BEWARE: implementation needs improvement or shouldn't be called on large dataloaders
+#         """
         
-        with torch.no_grad():
-            model.eval()
+#         with torch.no_grad():
+#             model.eval()
             
-            MRR_count = 0
-            iters = 0
+#             MRR_count = 0
+#             iters = 0
             
-            for data in dataloader:
+#             for data in dataloader:
                 
-                if model.genre_dim != 0:            
-                    inputs,genre_inputs,labels,x_lens,uid = data
-                    outputs = model(x=inputs.to(self.device),
-                                    x_lens=x_lens.squeeze().tolist(),
-                                    x_genre=genre_inputs.to(self.device))
+#                 if model.genre_dim != 0:            
+#                     inputs,genre_inputs,labels,x_lens,uid = data
+#                     outputs = model(x=inputs.to(self.device),
+#                                     x_lens=x_lens.squeeze().tolist(),
+#                                     x_genre=genre_inputs.to(self.device))
             
-                else:
-                    inputs,labels,x_lens,uid = data
-                    outputs = model(x=inputs.to(device),x_lens=x_lens.squeeze().tolist())
+#                 else:
+#                     inputs,labels,x_lens,uid = data
+#                     outputs = model(x=inputs.to(device),x_lens=x_lens.squeeze().tolist())
                     
-                # this is the part that takes forever (takes a couple of secs on cpu)
-                indices_sorted = torch.argsort(outputs, dim=-1)
-                indices_to_check = indices_sorted[:, :, :self.number]
+#                 # this is the part that takes forever (takes a couple of secs on cpu)
+#                 indices_sorted = torch.argsort(outputs, dim=-1)
+#                 indices_to_check = indices_sorted[:, :, :self.number]
                 
-                #formatting the labels so it's an easy boolean comparison
-                tmp_label_view = labels.unsqueeze(2)
-                label_indices = tmp_label_view.expand_as(indices_to_check)
+#                 #formatting the labels so it's an easy boolean comparison
+#                 tmp_label_view = labels.unsqueeze(2)
+#                 label_indices = tmp_label_view.expand_as(indices_to_check)
                 
-                hits = (indices_to_check == label_indices).nonzero()
-                ranks = hits[:, -1] + 1
-                recip_rank = torch.reciprocal(ranks)
-                mrr = torch.sum(recip_rank).item() / labels.size(0)
+#                 hits = (indices_to_check == label_indices).nonzero()
+#                 ranks = hits[:, -1] + 1
+#                 recip_rank = torch.reciprocal(ranks)
+#                 mrr = torch.sum(recip_rank).item() / labels.size(0)
                 
                 
-                MRR_count += mrr
-                iters += 1
+#                 MRR_count += mrr
+#                 iters += 1
                 
-            del outputs
-            del indices_sorted
-            del hits
-            del ranks
+#             del outputs
+#             del indices_sorted
+#             del hits
+#             del ranks
                 
-            return MRR_count / iters
+#             return MRR_count / iters
