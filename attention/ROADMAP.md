@@ -2,49 +2,37 @@
 
 ## Architecture Perspective
 
-We can't just "add attention on to GRU4REC". GRU4REC just uses a bunch of
-GRU layers in a row, fed into a feedforward network.
+GRU4REC uses a bunch of GRU layers in a row, fed into a feedforward network.
+This is great -- now, let's think about how to add attention to the network.
 
-All readings about attention involve their use in seq2seq style models.
-Readings:
+What attention-based readings have we looked through?
 
-- All You Need is Attention (OG Transformer paper).
-- Seq2Seq Paper.
+1. Seq2Seq for Sequential Recommendations (Sun + Qian). This paper isn't great,
+   because it uses attention based off a specific feature, such as Genre. We
+   don't want that here.
+2. All You Need is Attention (the OG Transformer paper). This fulfills our
+   attentive criteria, but isn't directly applicable to recommendations (it's
+   still very rooted in translation).
+3. GRU4REC. Unfortunately, I can't seem to find a way to add attentiveness here
+   without adding in an encoding-decoding submodule (at which point it's
+   basically the other papers).
+4. NARM: Neural Attentive Session-based Recommendation (Li, Ren, et al). This
+   is great! It uses GRU units, self-attention (no "specific feature selection"
+   required for attention), and gives its output in a form directly usable for
+   recommendations.
 
-Not much room for attention! We're not trying to map sequence to sequence here!
-Unless:
-
-## Hypothesis 1
-
-The GRU4REC paper mentions passing the hidden states from one GRU layer to the
-next ones.
-
-> When multiple GRU layers are used, the hidden state of the previous layer is
-> the input of the next one.
-
-The Pytorch documentation says this:
-
-> In a multilayer GRU, the input x of the l-th layer is the hidden state
-> h of the previous layer multiplied by dropout δ.
-
-Isn't attention basically this (but more complicated version of the dropout
-function)? Is this all we have to do to make an attentive GRU4REC?
-
-## Null Hypothesis
-
-A few options:
-
-1. Read out a sequence...that sequence will be the next things they click?
-   Unlikely.
-
+Code for each model is contained in their respective files.
 
 ## Code perspective
 
+What existing assets do we have?
+
 `nn.MultiheadAttention` is great, as is `nn.GRU` -- IF we don't want to tweak
-how the hidden layers interact.
+how the hidden layers interact. If we *do* want to tweak this, we should
+instead use what's in `encoder_decoder.py`, which makes every "step" of the
+encoder + decoder parts visible.
 
-If we clearly know what we want from every hidden layers, we can very
-effectively use what's in `encoder_decoder.py` -- this implementation makes
-every "step" of the encoder + decoder parts visible.
-
-Basically, whatever we do, we've got sources available.
+Also, there's already a NARM implementation on GitHub. I've pulled it in here.
+We may have to change the attention function from "addition-style" attention to
+"dot-product-style" attention, so we can keep our results comparable to the
+GRU4REC guys. TODO: double check which attention function they used.
