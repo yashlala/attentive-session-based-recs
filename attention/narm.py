@@ -1,4 +1,4 @@
-# This code is an implementation of Li, Jing, et al.
+# This code was originally an implementation of Li, Jing, et al.
 # It originated from:
 # https://github.com/Wang-Shuo/Neural-Attentive-Session-Based-Recommendation-PyTorch
 
@@ -11,12 +11,17 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 class NARM(nn.Module):
     """Neural Attentive Session Based Recommendation Model.
 
+    Note that this module performs its own embedding on the input.
+    This may be unnecessary, as we're already getting some high quality BERT
+    embeddings. TODO: Check this with Michael and Hamlin.
+
     Args:
-        n_items(int): the number of items
-        hidden_size(int): the hidden size of gru
-        embedding_dim(int): the dimension of item embedding
-        batch_size(int):
-        n_layers(int): the number of gru layers
+        n_items(int):       The number of items we'll be receiving as input
+                            (ie. the vocabulary size).
+        hidden_size(int):   The width of a GRU hidden layer.
+        embedding_dim(int): The dimension of our item embedding.
+        batch_size(int):    The batch size for our network training.
+        n_layers(int):      The number of GRU layers to use.
     """
     def __init__(self, n_items, hidden_size, embedding_dim, batch_size, n_layers=1):
         super(NARM, self).__init__()
@@ -48,7 +53,9 @@ class NARM(nn.Module):
         """Predict (unnormalized) item scores from an input sequence.
 
         Args:
-            seq: An input sequence of item embeddings to predict
+            Seq: An input sequence of items to predict. These items should be
+                 given in ItemID form -- embeddings are module-internal as of
+                 now.
         """
         hidden = self.init_hidden(seq.size(1))
         embs = self.emb_dropout(self.emb(seq))
@@ -56,7 +63,7 @@ class NARM(nn.Module):
         gru_out, hidden = self.gru(embs, hidden)
         gru_out, lengths = pad_packed_sequence(gru_out)
 
-        # Fetch the last hidden state of last timestamp
+        # Fetch the last hidden state of the last timestamp.
         ht = hidden[-1]
         gru_out = gru_out.permute(1, 0, 2)
 
