@@ -32,8 +32,8 @@ class Recall_E_prob(object):
         with torch.no_grad():
             model.eval()
 
-            MRR_count = 0
             
+            NDCG = 0
             total_hits = 0 
             for data in dataloader:
                 
@@ -71,32 +71,20 @@ class Recall_E_prob(object):
                                         
                     topk_items = outputs[i,x_lens[i].item()-1,sample_negatives].argsort(0,descending=True)[:self.k]
                     total_hits += torch.sum(topk_items == 100).item() 
-
-                    # TODO: check how we do this, this is getting us an error
-                    # addin MRR
-                    topk_items = outputs[i,x_lens[i].item()-1,:].argsort(0,descending=True)[:self.k]
-                    hits = (topk_items == labels[i, x_lens[i].item() - 1]).nonzero()
-                    ranks = hits + 1
-                    recip_rank = torch.reciprocal(ranks)
-                    # mrr = torch.sum(recip_rank).item() / labels[i].size(0)
-                    
-                    
-                    MRR_count += recip_rank.item()
-
-                    del hits
-                    del ranks
-                    del recip_rank
+                    rank_of_target = torch.where(topk_items == 100)[0]
+                    if rank_of_target.shape[0] > 0:
+                        NDCG += 1 / np.log2(rank_of_target.item() + 2)
                     
             del outputs
             del topk_items
-            if self.device.type == 'cuda':
+            if self.device == 'cuda':
                 torch.cuda.empty_cache()
                 
-            return total_hits/self.n_users*100, MRR_count/self.n_users
+            return total_hits/self.n_users*100, NDCG / self.n_users
     
     def popular_baseline(self):
         total_hits = 0 
-        MRR_count = 0
+        NDCG = 0
 
         for i,uid in enumerate(range(self.n_users)):
             history = self.user_history[uid]
@@ -114,18 +102,13 @@ class Recall_E_prob(object):
             sample_negatives.append(self.user_history[uid][-2])
                                 
             topk_items = self.p[np.array(sample_negatives)].argsort()[-self.k:]
+            rank_of_target = np.where(topk_items == 100)[0]
+            if rank_of_target.shape[0] > 0:
+                NDCG += 1 / np.log2(rank_of_target.item() + 2)
+            
             total_hits += np.sum(topk_items == 100).item() 
-
-            # addin MRR
-            # TODO: check how we do this, this is getting us an error
-            topk_items = self.p.argsort()[::-1]
-            hits = (topk_items == self.user_history[uid][-2]).nonzero()
-            ranks = hits[0]+ 1
-            recip_rank = 1 / ranks.sum() if ranks.sum() != 0 else 0
-
-            MRR_count += recip_rank
                         
-        return total_hits/self.n_users*100, MRR_count/self.n_users
+        return total_hits/self.n_users*100, NDCG / self.n_users
 
 
 class BPRLossWithNoClick(nn.Module):
