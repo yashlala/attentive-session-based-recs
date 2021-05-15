@@ -9,6 +9,7 @@ import numpy as np
 from tqdm import tqdm
 import torch.nn as nn
 import torch.nn.functional as F
+import pandas as pd
 
     
 class Recall_E_prob(object):
@@ -166,66 +167,56 @@ class BPRLossWithNoClick(nn.Module):
         return accumulator
 
 
-# class MRR(object):
-#     """
-#     heavily inspired from this place
-#     https://github.com/hungthanhpham94/GRU4REC-pytorch/blob/master/lib/metric.py
-#     """
-#     def __init__(self, device: torch.device, k=10):
-#         """
-#         seems like the only thing we need to keep track of is the device
-#         and the @hits
-#         """
-#         print("="*10,"Creating MRR@{:d} Metric Object".format(k),"="*10)
-#         self.device = device
-#         self.number = k
+class BPRLoss(nn.Module):
+    """
+    BPR loss function that does not utilize the no click history from preprocessing
+    
+    """
+    
+    def __init__(self, user_history: dict, n_items, df: pd.DataFrame, device: torch.device, samples=1):
+        self.n_items = n_items
+        self.samples = samples
+        self.user_history = user_history
         
+        # same from recall
+        self.p = df.groupby('item_id',sort='item_id').size()
+        self.p = self.p.values / self.p.sum()
         
-#     def __call__(self, model, dataloader):
-#         """
-#         only requires the labels since that seems the only thing it needs for calculation
-
-#         BEWARE: implementation needs improvement or shouldn't be called on large dataloaders
-#         """
+        print(self.p.size)
         
-#         with torch.no_grad():
-#             model.eval()
+        self.device = device
+        super(BPRLoss, self).__init__()
+        
+    def forward(self, output: torch.Tensor, labels: torch.Tensor, x_lens: torch.Tensor, uids: torch.Tensor):
+        """
+        takes in the
+        :param output: output tensor of model
+        :param labels: 2nd element from data tuple of a dataloader (item indices of next item)
+        :param x_lens: 3rd element from data tuple (length of seq)
+        :param uid: user_ids
+        """
+        accumulator = torch.FloatTensor([0.]).to(self.device)
+        for i, uid in enumerate(uids.squeeze()):
+            uid_history = set(self.user_history[uid.item()][:-2]) # we only compute loss when training
+            all_indices = output[i, :x_lens[i].item(), :]
             
-#             MRR_count = 0
-#             iters = 0
+            positive_scores = torch.gather(all_indices, dim=1, index=labels[i][:x_lens[i].item()].unsqueeze(1))
             
-#             for data in dataloader:
+            # negative sampling taken straight from the recall object 
+            negative_item_ids = []
+            while len(negative_item_ids) < self.samples:
+                sampled_ids = np.random.choice(self.n_items, self.samples, replace=False, p=self.p).tolist()
+                sampled_ids = [x for x in sampled_ids if x not in uid_history and x not in negative_item_ids]
+                negative_item_ids.extend(sampled_ids[:])
                 
-#                 if model.genre_dim != 0:            
-#                     inputs,genre_inputs,labels,x_lens,uid = data
-#                     outputs = model(x=inputs.to(self.device),
-#                                     x_lens=x_lens.squeeze().tolist(),
-#                                     x_genre=genre_inputs.to(self.device))
+                
+            negative_scores = torch.gather(all_indices, 
+                                           dim=1, 
+                                           index=torch.LongTensor(np.array(negative_item_ids)).unsqueeze(1).to(self.device))
             
-#                 else:
-#                     inputs,labels,x_lens,uid = data
-#                     outputs = model(x=inputs.to(device),x_lens=x_lens.squeeze().tolist())
-                    
-#                 # this is the part that takes forever (takes a couple of secs on cpu)
-#                 indices_sorted = torch.argsort(outputs, dim=-1)
-#                 indices_to_check = indices_sorted[:, :, :self.number]
-                
-#                 #formatting the labels so it's an easy boolean comparison
-#                 tmp_label_view = labels.unsqueeze(2)
-#                 label_indices = tmp_label_view.expand_as(indices_to_check)
-                
-#                 hits = (indices_to_check == label_indices).nonzero()
-#                 ranks = hits[:, -1] + 1
-#                 recip_rank = torch.reciprocal(ranks)
-#                 mrr = torch.sum(recip_rank).item() / labels.size(0)
-                
-                
-#                 MRR_count += mrr
-#                 iters += 1
-                
-#             del outputs
-#             del indices_sorted
-#             del hits
-#             del ranks
-                
-#             return MRR_count / iters
+            difference = positive_scores - negative_scores
+            
+            # TODO: someone check if i need to actually take a mean of columns then of rows or altogether?
+            accumulator += -torch.mean(torch.sum(F.logsigmoid(difference), dim=1))
+        
+        return accumulator
