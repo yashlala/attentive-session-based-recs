@@ -162,7 +162,7 @@ class BPRLossWithNoClick(nn.Module):
             difference = positive_scores - negative_scores
             
             # TODO: someone check if i need to actually take a mean of columns then of rows or altogether?
-            accumulator += -torch.mean(torch.mean(F.logsigmoid(difference), dim=1))
+            accumulator += -torch.mean(torch.sum(F.logsigmoid(difference), dim=1))
         
         return accumulator / uids.shape[0]
 
@@ -208,6 +208,7 @@ class BPRLoss(nn.Module):
             while len(negative_item_ids) < x_lens[i].item():
                 inner_neg_ids = []
                 
+                # TODO: check this if sampling is correct
                 # check if we match the sample length
                 while len(inner_neg_ids) < self.samples:
                     sampled_ids = np.random.choice(self.n_items, self.samples, replace=False, p=self.p).tolist()
@@ -225,15 +226,14 @@ class BPRLoss(nn.Module):
             difference = positive_scores - negative_scores
             
             
-            accumulator += -torch.sum(torch.mean(F.logsigmoid(difference), dim=1))
+            accumulator += -torch.mean(torch.sum(F.logsigmoid(difference), dim=1))
         
         return accumulator / uids.shape[0]
 
 
 class BPRMaxLoss(nn.Module):
     """
-    BPR loss function that does not utilize the no click history from preprocessing\
-    applies softmax component
+    BPR loss function that does not utilize the no click history from preprocessing
     
     """
     
@@ -290,8 +290,12 @@ class BPRMaxLoss(nn.Module):
             
             difference = positive_scores - negative_scores
             
+            #TODO: check this stuff
             soft_max_neg = F.softmax(negative_scores, dim=1) 
             
-            
-            accumulator += -torch.mean(torch.log(torch.mean(soft_max_neg * torch.sigmoid(difference), dim=1))) + self.reg * torch.sum(soft_max_neg * torch.square(negative_scores))
+            #TODO: check this stuff
+            accumulator += torch.mean(
+                -torch.log(torch.sum(soft_max_neg * torch.sigmoid(difference), dim=1)) 
+                + self.reg * torch.sum(soft_max_neg * torch.square(negative_scores), dim = 1))
+
         return accumulator / uids.shape[0]
