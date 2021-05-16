@@ -303,7 +303,7 @@ class gru4recFC(nn.Module):
                 continue
             item_id = reset_object.item_enc.transform([item_id]).item()
             self.plot_embedding.weight.data[item_id,:] = torch.DoubleTensor(embedding)
-       
+            
 class gru4rec_conv(nn.Module):
     """
     embedding dim: the dimension of the item-embedding look-up table

@@ -2,7 +2,7 @@
 """
 Created on Sat Mar 27 07:43:13 2021
 
-@author: lpott
+@author: lpott, hamlin
 """
 import torch
 import numpy as np
@@ -34,8 +34,15 @@ class Recall_E_prob(object):
             model.eval()
 
             
-            NDCG = 0
-            total_hits = 0 
+            ndcg_1 = 0
+            hit_1 = 0
+            
+            ndcg_5 = 0
+            hit_5 = 0
+            
+            ndcg_10 = 0
+            hit_10 = 0
+            
             for data in dataloader:
                 
                 if model.genre_dim != 0:            
@@ -58,30 +65,45 @@ class Recall_E_prob(object):
                     if mode == "test":
                         history = set(history)
                         
-                    sample_negatives = []
-                    
+                    #sample_negatives = []
+                    sample_negatives = [labels[i,x_lens[i].item()-1].item()]
                     while len(sample_negatives) < 101:
                         
                         sampled_ids = np.random.choice(self.n_items, 100, replace=False, p=self.p).tolist()
                         sampled_ids = [x for x in sampled_ids if x not in history and x not in sample_negatives]
                         sample_negatives.extend(sampled_ids[:])
                         
-                    sample_negatives = sample_negatives[:100].copy()
+                    #sample_negatives = sample_negatives[:100].copy()
+                    sample_negatives = sample_negatives[:101].copy()
+                    #sample_negatives.append(labels[i,x_lens[i].item()-1].item())
+                    rank = torch.where(outputs[i,x_lens[i].item()-1,sample_negatives].argsort(descending=True)==0)[0].item()          
+                    #topk_items = outputs[i,x_lens[i].item()-1,sample_negatives].argsort(0,descending=True)[:self.k]
                     
-                    sample_negatives.append(labels[i,x_lens[i].item()-1].item())
-                                        
-                    topk_items = outputs[i,x_lens[i].item()-1,sample_negatives].argsort(0,descending=True)[:self.k]
-                    total_hits += torch.sum(topk_items == 100).item() 
-                    rank_of_target = torch.where(topk_items == 100)[0]
-                    if rank_of_target.shape[0] > 0:
-                        NDCG += 1 / np.log2(rank_of_target.item() + 2)
                     
+                    
+                    if rank < 1:
+                        ndcg_1 += 1
+                        hit_1 += 1
+                    if rank < 5:
+                        ndcg_5 += 1 / np.log2(rank + 2)
+                        hit_5 += 1
+                    if rank < 10:
+                        ndcg_10 += 1 / np.log2(rank + 2)
+                        hit_10 += 1
+                    
+                    #total_hits += torch.sum(topk_items == 100).item() 
+                    #rank_of_target = torch.where(topk_items == 100)[0]
+                    #if rank_of_target.shape[0] > 0:
+                    #    NDCG += 1 / np.log2(rank_of_target.item() + 2)
+                   
             del outputs
-            del topk_items
+            del rank
+            del sample_negatives
+            
             if self.device == 'cuda':
                 torch.cuda.empty_cache()
                 
-            return total_hits/self.n_users*100, NDCG / self.n_users
+            return (hit_10/self.n_users,hit_5/self.n_users,hit_1/self.n_users),(ndcg_10/self.n_users,ndcg_5/self.n_users,ndcg_1/self.n_users)
     
     def popular_baseline(self):
         total_hits = 0 
