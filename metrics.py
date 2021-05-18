@@ -318,6 +318,6 @@ class BPRMaxLoss(nn.Module):
             #TODO: check this stuff
             accumulator += torch.mean(
                 -torch.log(torch.sum(soft_max_neg * torch.sigmoid(difference), dim=1)) 
-                + self.reg * torch.sum(soft_max_neg * torch.square(negative_scores), dim = 1))
+                + self.reg * torch.sum(soft_max_neg * negative_scores**2, dim = 1))
 
         return accumulator / uids.shape[0]
