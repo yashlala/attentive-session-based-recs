@@ -29,6 +29,13 @@ class Recall_E_prob(object):
             
         
     def __call__(self,model,dataloader,mode="train"):
+        """
+        
+        Return
+        3 - tuple of hits
+        3 - tuple of ndcg
+        1 integer that is the total MRR
+        """
         
         with torch.no_grad():
             model.eval()
@@ -42,6 +49,8 @@ class Recall_E_prob(object):
             
             ndcg_10 = 0
             hit_10 = 0
+
+            mrr = 0
             
             for data in dataloader:
                 
@@ -91,6 +100,7 @@ class Recall_E_prob(object):
                         ndcg_10 += 1 / np.log2(rank + 2)
                         hit_10 += 1
                     
+                    mrr += 1 / (rank + 1)
                     #total_hits += torch.sum(topk_items == 100).item() 
                     #rank_of_target = torch.where(topk_items == 100)[0]
                     #if rank_of_target.shape[0] > 0:
@@ -103,11 +113,16 @@ class Recall_E_prob(object):
             if self.device == 'cuda':
                 torch.cuda.empty_cache()
                 
-            return (hit_10/self.n_users,hit_5/self.n_users,hit_1/self.n_users),(ndcg_10/self.n_users,ndcg_5/self.n_users,ndcg_1/self.n_users)
+            return (hit_10/self.n_users,hit_5/self.n_users,hit_1/self.n_users),(ndcg_10/self.n_users,ndcg_5/self.n_users,ndcg_1/self.n_users), mrr
     
     def popular_baseline(self):
+        """
+        NOTE: MRR is off by 0.01 from the baseline in the BERT4REC paper
+        """
         total_hits = 0 
         NDCG = 0
+
+        MRR = 0
 
         for i,uid in enumerate(range(self.n_users)):
             history = self.user_history[uid]
@@ -125,13 +140,22 @@ class Recall_E_prob(object):
             sample_negatives.append(self.user_history[uid][-2])
                                 
             topk_items = self.p[np.array(sample_negatives)].argsort()[-self.k:]
+            all_items = self.p[np.array(sample_negatives)].argsort()
             rank_of_target = np.where(topk_items == 100)[0]
+
+            all_rank_of_target = np.where(all_items == 100)[0]
             if rank_of_target.shape[0] > 0:
                 NDCG += 1 / np.log2(rank_of_target.item() + 2)
+                
             
             total_hits += np.sum(topk_items == 100).item() 
+
+            MRR += 1 / (all_rank_of_target + 1)
+
+
+            
                         
-        return total_hits/self.n_users*100, NDCG / self.n_users
+        return total_hits/self.n_users*100, NDCG / self.n_users, MRR / self.n_users
 
 
 class BPRLossWithNoClick(nn.Module):
