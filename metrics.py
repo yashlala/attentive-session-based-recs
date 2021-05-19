@@ -113,7 +113,7 @@ class Recall_E_prob(object):
             if self.device == 'cuda':
                 torch.cuda.empty_cache()
                 
-            return (hit_10/self.n_users,hit_5/self.n_users,hit_1/self.n_users),(ndcg_10/self.n_users,ndcg_5/self.n_users,ndcg_1/self.n_users), mrr
+            return (hit_10/self.n_users,hit_5/self.n_users,hit_1/self.n_users),(ndcg_10/self.n_users,ndcg_5/self.n_users,ndcg_1/self.n_users), mrr / self.n_users
     
     def popular_baseline(self):
         """
