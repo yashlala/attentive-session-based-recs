@@ -9,7 +9,7 @@ import pandas as pd
 
 from tqdm import tqdm
 
-from sklearn.preprocessing import LabelEncoder 
+from sklearn.preprocessing import LabelEncoder
 
 
 # TODO: check if you can increase the efficiency
@@ -29,28 +29,28 @@ def create_df(filename=None,size="1m"):
     print("="*10,"Creating DataFrame","="*10)
     if size == "1m":
         # read in the .dat file, and the entries on each line are separated by '::'
-        df = pd.read_csv(filename,sep='::',header=None)
+        df = pd.read_csv(filename,sep='::',header=None, engine='python')
         df.columns= ['user_id','item_id','rating','timestamp']
-        
+
     elif size == "20m":
         df = pd.read_csv(filename,header=0,names=['user_id','item_id','rating','timestamp'])
-    
+
     else:
         print("Not a proper size, or file not found")
         return
-    
+
     # sort the dataframe by the timestamp, and drop the new "index" that appears from the sort
     df.sort_values('timestamp',inplace=True)
-    
+
     # group all rows in the dataframe by user, and then get the length of each user session
     user_group = df.groupby('user_id').size()
 
     # get the number of unique users, items, ratings, and timestamps (number of unique values in each column)
     print(df.nunique())
-    
+
     # get the shape of the dataframe (rows x columns)
     print(df.shape)
-    
+
     # print statistics about the user session lengths such as max, min, and average
     print("Minimum Session Length: {:d}".format(user_group.min()))
     print("Maximum Session Length: {:d}".format(user_group.max()))
@@ -70,38 +70,38 @@ def create_movie_df(filename=None,size="1m"):
         returns a sorted by timestamp pandas dataframe with 4 columns: user id, item id, rating, and timestamp.
     """
     print("="*10,"Creating Movie Info DataFrame","="*10)
-    
-    
+
+
     if size == "1m":
         # read in the .dat file, and the entries on each line are separated by '::'
         #df = pd.read_csv(filename,sep='::',header=None)
         #df.columns= ["item_id", "title","genre","imdb_id","tmbd_id","mplot"]
         df = pd.read_csv(filename,header=0,names=["item_id","title","genre","mplot"])
-        
+
     elif size == "20m":
            # read in the .csv file, and the entries
         df = pd.read_csv(filename,header=0,names=["item_id", "title","genre","imdb_id","tmbd_id","mplot"])
-        
-    
+
+
     # get the shape of the dataframe (rows x columns)
     print(df.shape)
-    
+
     plot_sizes = df[-df.mplot.isna()].mplot.apply(lambda x: len(str(x).split()))
     number_missing = df.mplot.isna().sum()
-    
+
     # if there is no movie plot for a movie, make the movie plot the title of the movie
     df.mplot[df.mplot.isna()] = df.title[df.mplot.isna()]
-    
+
     # convert all the movie plots to strings (inacase there are just numbers)
     df.mplot = df.mplot.apply(str)
-    
+
     # print statistics about the user session lengths such as max, min, and average
     print("Minimum Plot Length: {:d}".format(plot_sizes.min()))
     print("Maximum Plot Length: {:d}".format(plot_sizes.max()))
     print("Average Plot Length: {:.2f}".format(plot_sizes.mean()))
-    
+
     print("Number of missing plots: {:d}".format(number_missing))
-    
+
     # get the number of unique movie id, etc (number of unique values in each column)
     print(df.nunique())
 
@@ -126,37 +126,37 @@ def filter_df(df=None,item_min=10):
     print("="*10,"Filtering Sessions <= {:d}  DataFrame".format(item_min),"="*10)
 
     if df is None:
-        return 
-    
+        return
+
     # groupo all the rows in the dataframe by user, and then get the length of each user session
     user_counts = df.groupby('user_id').size()
-    
+
     # see which users have a session length greater than or equal to item_min
     user_subset = np.in1d(df.user_id,user_counts[user_counts >= item_min].index)
-    
+
     # keep only the users with session length greater than or equal to item_min
     # reset the index...
     filter_df = df[user_subset].reset_index(drop=True)
-    
+
     # check to make sure there are no user session lengths less than item_min
-    assert (filter_df.groupby('user_id').size() < item_min).sum() == 0    
-    
+    assert (filter_df.groupby('user_id').size() < item_min).sum() == 0
+
     # group all rows in the dataframe by user, and then get the length of each user session
     user_group = filter_df.groupby('user_id').size()
-    
+
     # get the number of unique users, items, ratings, and timestamps (number of unique values in each column)
     print(filter_df.nunique())
-    
+
     # get the shape of the dataframe (rows x columns)
     print(filter_df.shape)
-    
+
     # print statistics about the user session lengths such as max, min, and average
     print("Minimum Session Length: {:d}".format(user_group.min()))
     print("Maximum Session Length: {:d}".format(user_group.max()))
     print("Average Session Length: {:.2f}".format(user_group.mean()))
-    
+
     return filter_df
-    
+
 def create_user_history(df=None):
     """
     Parameters
@@ -173,13 +173,13 @@ def create_user_history(df=None):
     """
     if df is None:
         return None
-    
+
     print("="*10,"Creating User Histories","="*10)
-    
+
     """
     # initialize empty user dictionary
     user_history = {}
-    
+
     # iterate through each user id
     for uid in tqdm(df.user_id.unique()):
         # get the user session for user id uid
@@ -187,7 +187,7 @@ def create_user_history(df=None):
         # save session as value in dictionary corresponding to key uid
         user_history[uid] = sequence
     """
-        
+
     user_history = {uid : df[df.user_id == uid].item_id.values.tolist() for uid in tqdm(df.user_id.unique())}
     return user_history
 
@@ -195,44 +195,44 @@ def convert_genres(df, null_genre="NULL"):
     """
     Parameters
     ----------
-    
+
     df: pandas dataframe
         dataframe that is outputed from create_movie_df
-        
+
     Returns
     -------
-    
+
     df: same df but with the genre column changed
     """
     new_df = df[['item_id', 'genre']].copy()
     new_df['genre'] = new_df.genre.apply(lambda x: x.split('|'))
     max_genres = new_df['genre'].apply(lambda x: len(x)).max()
-    
+
     def filling_genres(x):
         fill_value = null_genre
         added_null = max_genres - len(x)
         return x + added_null * [fill_value]
-    
+
     new_df['genre'] = new_df.genre.apply(filling_genres)
     return new_df
 
 class reset_df(object):
-    
+
     def __init__(self):
         print("="*10,"Initialize Reset DataFrame Object","="*10)
-        
+
         # initialize labelencoder (which encode target labels with value between 0 and n_classes-1.)
         self.item_enc = LabelEncoder()
         self.user_enc = LabelEncoder()
         self.genre_enc = LabelEncoder()
-        
+
     def fit_transform(self, df, movie_df=None):
         """
         Parameters
         ----------
         df : pandas dataframe
-            The pandas dataframe where each row is a user id, item id, rating, and timestamp. 
-            
+            The pandas dataframe where each row is a user id, item id, rating, and timestamp.
+
         movie_df: pandas dataframe
             dataframe that is outputed from convert_genres
 
@@ -240,49 +240,49 @@ class reset_df(object):
         -------
         df : pandas dataframe
             The pandas dataframe with the item ids and user ids mapped to a value between 0 and n_unique_item_ids-1 and 0 and n_unique_user_ids-1 respectively.
-        
+
         movie_df
         """
         print("="*10,"Resetting user ids and item ids in DataFrame","="*10)
-        
+
         #new_movie_df = self.encoding_genres(movie_df)
-        
+
         # encode item ids with value between 0 and n_classes-1.
         df['item_id'] = self.item_enc.fit_transform(df['item_id'])
-        
+
         # encode movie ids with value between 0 and n_classes-1.
         df['user_id'] = self.user_enc.fit_transform(df['user_id'])
-        
+
         if movie_df is not None:
             print("="*10,"Resetting movie item ids in movie DataFrame","="*10)
             movie_df['item_id'] = [self.item_enc.transform([itemid]).item() if (itemid in self.item_enc.classes_) else -1 for itemid in movie_df.item_id]
-            
-            encodings = np.unique(np.concatenate(movie_df['genre'].tolist())) 
+
+            encodings = np.unique(np.concatenate(movie_df['genre'].tolist()))
             self.genre_enc.fit(encodings)
             movie_df['genre'] = movie_df.genre.apply(self.genre_enc.transform)
 
             movie_df = movie_df[movie_df.item_id != -1].reset_index(drop=True)
-            
+
             # adding pad genres
             len_genres = len(movie_df['genre'][0])
-            movie_df.loc[len(movie_df.index)] = [len(movie_df.index), np.array([self.genre_enc.transform(["NULL"]).item()] * len_genres)] 
-        
-        # make sure that the item id and the user id both start at 0 
+            movie_df.loc[len(movie_df.index)] = [len(movie_df.index), np.array([self.genre_enc.transform(["NULL"]).item()] * len_genres)]
+
+        # make sure that the item id and the user id both start at 0
         assert df.user_id.min() == 0
-        assert df.item_id.min() == 0 
-        
+        assert df.item_id.min() == 0
+
         if movie_df is not None:
             return df, movie_df
-        
+
         else:
             return df
-    
+
     def inverse_transform(self,df):
         """
         Parameters
         ----------
         df : pandas dataframe
-            The pandas dataframe where each row is a user id, item id, rating, and timestamp. 
+            The pandas dataframe where each row is a user id, item id, rating, and timestamp.
 
         Returns
         -------
@@ -291,10 +291,10 @@ class reset_df(object):
         """
         # Transform item ids back to original encoding.
         df['item_id'] = self.item_enc.inverse_transform(df['item_id'])
-        
+
         # Transform user ids back to original encoding.
         df['user_id'] = self.user_enc.inverse_transform(df['user_id'])
-        
+
         return df
 
 def train_val_test_split(user_history=None,max_length=200):
@@ -323,29 +323,29 @@ def train_val_test_split(user_history=None,max_length=200):
     """
     if user_history is None:
         return None
-    
+
     # add 1 to the maximum length of the parameter to truly get user sessions of max length
     # (is max length is 40, then we want 41 because 0:40 is train input whereas 1:41 is label)
     max_length = max_length + 1
 
 
     print("="*10,"Splitting User Histories into Train, Validation, and Test Splits","="*10)
-    
+
     # initialize empty user dictionary for train, validation, and test dictionarys
     train_history = {}
     val_history = {}
     test_history = {}
-    
+
     # iterate through each user and corresponding user session history
     for key,history in tqdm(user_history.items(),position=0, leave=True):
-        
+
         # assign value for each key (uid) the the last max_length items before the last 2 items in a user session history
         train_history[key] = history[-(max_length+2):-2]
         # assign value for each key (uid) the last max_length items before the last item in a user session history
         val_history[key] = history[-(max_length+1):-1]
         # assign value for each key (uid) the last max_length items in a user session history
         test_history[key] = history[(-max_length):]
-        
+
     return train_history,val_history,test_history
 
 # TODO: make this better
@@ -380,17 +380,17 @@ def create_user_noclick(user_history,df,n_items):
 
     # iterate through each user and corresponding user session history
     for uid,history in tqdm(user_history.items()):
-        
+
         # get a list of all the items that user uid has no clicked on historically
         no_clicks = list(set.difference(set(all_items.tolist()),set(history)))
-        
+
         # get the number of times each item id was clicked across all users for the subset
         item_counts_subset = item_counts[no_clicks]
-        
+
         # normalize to get probabilities (more popular items have higher probability)
         probabilities = (item_counts_subset).values
 
         # assign the tuple of no click list and corresponding probabilities to the respective user id key
         user_noclick[uid] = (no_clicks,probabilities)
-    
+
     return user_noclick
