@@ -26,9 +26,11 @@ conda activate cs-249-project
 ```
 
 This will create and activate a Conda environment with all the dependencies
-required to use our project code.
+required to use our project code. Note that the Conda environment is not
+persistent -- when running our code in a new shell session, you will have to
+re-run `conda activate cs-249-project`.
 
-From here, you can look through
+From here, you can look through the other files in our project.
 
 All files with the suffix `.ipynb` can be run via Jupyter Notebook --
 to open them, run `jupyter notebook` command in the root directory of the
