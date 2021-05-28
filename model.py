@@ -634,3 +634,193 @@ class NARM(nn.Module):
     def init_hidden(self, batch_size):
         return torch.zeros((self.n_layers, batch_size, self.hidden_size),
                 requires_grad=True).to(self.device)
+    
+class gru4recF_attention(nn.Module):
+    """
+    embedding dim: the dimension of the item-embedding look-up table
+    hidden_dim: the dimension of the hidden state of the GRU-RNN
+    batch_first: whether the batch dimension should be the first dimension of input to GRU-RNN
+    output_dim: the output dimension of the last fully connected layer
+    max_length: the maximum session length for any user, used for packing/padding input to GRU-RNN
+    pad_token: the value that pad tokens should be set to for GRU-RNN and item embedding
+    bert_dim: the dimension of the feature-embedding look-up table
+    ... to do add all comments ... 
+    """
+    def __init__(self,embedding_dim,
+                 hidden_dim,
+                 output_dim,
+                 attn_dim,
+                 genre_dim=0,
+                 batch_first=True,
+                 max_length=200,
+                 pad_token=0,
+                 pad_genre_token=0,
+                 bert_dim=0,
+                 dropout=0,
+                 tied=False,
+                 cat=True,
+                 attn=True):
+        
+        super(gru4recF_attention,self).__init__()
+        
+        self.batch_first =batch_first
+        
+        self.embedding_dim = embedding_dim
+        self.hidden_dim =hidden_dim
+        self.output_dim =output_dim
+        self.genre_dim = genre_dim
+        self.bert_dim = bert_dim
+        self.attn_dim = attn_dim
+
+        self.max_length = max_length
+        self.pad_token = pad_token
+        self.pad_genre_token = pad_genre_token
+        
+        self.tied = tied
+        self.dropout = dropout
+        self.cat = cat
+        self.attn = attn
+        
+        if self.tied:
+            self.hidden_dim = embedding_dim
+    
+        # initialize item-id lookup table
+        # add 1 to output dimension because we have to add a pad token
+        self.movie_embedding = nn.Embedding(output_dim+1,embedding_dim,padding_idx=pad_token)
+        
+        #  initialize plot lookup table
+        # add 1 to output dimensino because we have to add a pad token
+        if bert_dim != 0:
+            self.plot_embedding = nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
+            #self.plot_embedding.requires_grad_(requires_grad=False)
+            #self.plot_embedding = torch.ones(output_dim+1,bert_dim).cuda() #nn.Embedding(output_dim+1,bert_dim,padding_idx=pad_token)
+            #self.plot_embedding[pad_token,:] = 0
+            
+            # project plot embedding to same dimensionality as movie embedding
+            self.plot_projection = nn.Linear(bert_dim,embedding_dim)
+                    
+        if genre_dim != 0:
+            self.genre_embedding = nn.Embedding(genre_dim+1,embedding_dim,padding_idx=pad_genre_token)
+
+
+        self.encoder_layer = nn.GRU(embedding_dim,self.hidden_dim,batch_first=self.batch_first,dropout=self.dropout)
+        
+        if attn:
+            self.attention_layer = nn.Linear(self.hidden_dim,self.attn_dim)
+            self.score_layer = nn.Linear(self.attn_dim*2,1)
+            self.sigmoid = nn.Sigmoid()
+
+        if cat:
+            attn_dim = attn_dim + hidden_dim # ht cat weightedSum
+        
+#         # add 1 to the output dimension because we have to add a pad token
+        if not self.tied:
+            self.output_layer = nn.Linear(attn_dim,output_dim)
+        
+        if self.tied:
+            self.output_layer = nn.Linear(attn_dim,output_dim+1)
+            self.output_layer.weight = self.movie_embedding.weight
+    
+    def forward(self,x,x_lens,x_genre=None,pack=True,**kwargs):
+        # add the plot embedding and movie embedding
+        # do I add non-linearity or not? ... 
+        # concatenate or not? ...
+        # many questions ...
+        batch_size = x.size()[0]
+        if (self.bert_dim != 0) and (self.genre_dim != 0):
+            x = self.movie_embedding(x) + self.plot_projection(F.leaky_relu(self.plot_embedding(x))) + self.genre_embedding(x_genre).sum(2)
+        elif (self.bert_dim != 0) and (self.genre_dim == 0):
+            x = self.movie_embedding(x) + self.plot_projection(F.leaky_relu(self.plot_embedding(x)))
+        elif (self.bert_dim == 0) and (self.genre_dim != 0):
+            x = self.movie_embedding(x) + self.genre_embedding(x_genre).sum(2)
+        else:
+            x = self.movie_embedding(x)
+        
+#         print("Embedder Dimension: ")
+#         print(x.size())
+        
+        if pack:
+            x = pack_padded_sequence(x,x_lens,batch_first=True,enforce_sorted=False)
+        
+        encoder_states, _ = self.encoder_layer(x) 
+        
+        if pack:
+            encoder_states, _ = pad_packed_sequence(encoder_states, batch_first=self.batch_first,total_length=self.max_length,padding_value=self.pad_token)
+        
+        if self.attn:
+            attn_states = self.attention_layer(encoder_states)
+#             hidden_state = self.attention_layer(hidden_state)
+        
+        # CCs = BS x MS x 2HS
+        combined_contexts = torch.zeros(batch_size,max_length,self.attn_dim)
+        combined_contexts = combined_contexts.cuda()
+        
+        for t in range(max_length):
+            # CF = BS x (t+1) x HS
+            context_frame = attn_states[:,:t+1,:]
+            # CH = BS x HS x 1
+            current_hidden = attn_states[:,t,:].squeeze(1).unsqueeze(2)
+            # AS = BS x (t+1) x 1
+            attention_score = torch.bmm(context_frame,current_hidden).squeeze(2) / self.attn_dim
+            attention_score = torch.nn.functional.softmax(attention_score,1).unsqueeze(2)
+            # CFT = BS x HS x (t+1)
+            context_frame_transposed = torch.transpose(context_frame,1,2)
+            # CV = BS x HS
+            context_vector = torch.bmm(context_frame_transposed,attention_score).squeeze(2)
+            # CH = BS x HS
+#             current_hidden = current_hidden.squeeze(2)
+            # CC = BS x AS
+            combined_contexts[:,t,:] = context_vector
+        
+#         for t in range(max_length):
+#             # CF = BS x (t+1) x AS
+#             context_frame = attn_states[:,:t+1,:]
+#             # CH = BS x 1 x AS
+#             current_hidden = attn_states[:,t,:].unsqueeze(1)
+#             # CH = BS x (t+1) x AS
+#             current_hidden = torch.cat((t+1)*[current_hidden],1)
+#             #CBF = BS x (t+1) x 2*AS
+#             combined_frame = torch.cat((context_frame,current_hidden),2)
+#             # AS = BS x (t+1) x 1
+#             attention_score = self.score_layer(combined_frame) / self.attn_dim
+#             attention_score = self.sigmoid(attention_score)
+#             attention_score = torch.nn.functional.softmax(attention_score,1)
+#             # CFT = BS x HS x (t+1)
+#             context_frame_transposed = torch.transpose(context_frame,1,2) # hidden_state?
+#             # CV = BS x HS
+#             context_vector = torch.bmm(context_frame_transposed,attention_score).squeeze(2)
+#             # CH = BS x HS
+# #             current_hidden = current_hidden.squeeze(2)
+#             # CC = BS x AS
+#             combined_contexts[:,t,:] = context_vector
+
+        if self.cat:
+            ## CCs = BS x MS x AS, ES = BS x MS x HS
+            combined_contexts_cat = torch.cat((combined_contexts,encoder_states),2)
+                
+        # print(combined_contexts_cat)
+            
+        # CCC = BS x MS x (AS + HS)
+        # O = BS x MS x V
+        if self.cat:
+            x = self.output_layer(combined_contexts_cat)
+        else:
+            x = self.output_layer(combined_contexts)
+            
+#         print("Encoder States: ")
+#         print(encoder_states)
+#         print(encoder_states.size())
+#         print("Combined Contexts: ")
+#         print(combined_contexts.size())
+#         print("Combined Contexts Cat.: ")
+#         print(combined_contexts_cat.size())
+        
+        return x
+    def initHidden(self):
+        return torch.zeros(1, 1, self.hidden_size, device=device)
+    def init_weight(self,reset_object,feature_embed):
+        for (item_id,embedding) in feature_embed.items():
+            if item_id not in reset_object.item_enc.classes_:
+                continue
+            item_id = reset_object.item_enc.transform([item_id]).item()
+            self.plot_embedding.weight.data[item_id,:] = torch.DoubleTensor(embedding)
