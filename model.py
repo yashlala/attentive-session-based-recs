@@ -756,7 +756,7 @@ class gru4recF_attention(nn.Module):
         if torch.cuda.is_available(): 
             combined_contexts = combined_contexts.cuda()
         
-        for t in range(max_length):
+        for t in range(self.max_length):
             # CF = BS x (t+1) x HS
             context_frame = attn_states[:,:t+1,:]
             # CH = BS x HS x 1
