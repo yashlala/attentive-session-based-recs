@@ -108,16 +108,17 @@ the movie.
 We have linked our generated DistilBERT plot embeddings below.
 If the links are broken, please file an issue in this repository.
 
-1. MovieLens 1M DistilBERT plot embeddings: put this data a file called
-   `bert_sequence_1m.txt`. The data can be found
+1. MovieLens 1M DistilBERT plot embeddings: save this file as
+   `data/bert_sequence_1m.txt`. The data can be found
    [here](https://drive.google.com/file/d/1D6_jvNBs6YNhYU8Bd9UOKBVQrnoNAO78/view?usp=sharing).
-2. MovieLens 20M DistilBERT plot embeddings: put this data a file called
-   `bert_sequence_20m.txt`. We didn't use this dataset for our experiments. The
-   data can be found
+2. MovieLens 20M DistilBERT plot embeddings: save this file as
+   `data/bert_sequence_20m.txt`. The data can be found
    [here](https://drive.google.com/file/d/1zzXhfT4LrQIxDCWHlA34D-g1VVl2ZU7s/view?usp=sharing).
 
 After the plot embeddings have been generated, we have enough data to run our
 models.
+
+### Results Replication
 
 All Jupyter Notebooks here are self contained. They use the `preprocessing.py`
 Python module (included here) to structure the data into their preferred forms.
