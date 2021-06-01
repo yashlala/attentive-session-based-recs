@@ -752,7 +752,7 @@ class gru4recF_attention(nn.Module):
 #             hidden_state = self.attention_layer(hidden_state)
         
         # CCs = BS x MS x 2HS
-        combined_contexts = torch.zeros(batch_size,max_length,self.attn_dim)
+        combined_contexts = torch.zeros(batch_size,self.max_length,self.attn_dim)
         combined_contexts = combined_contexts.cuda()
         
         for t in range(max_length):
