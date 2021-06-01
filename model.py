@@ -635,6 +635,7 @@ class NARM(nn.Module):
         return torch.zeros((self.n_layers, batch_size, self.hidden_size),
                 requires_grad=True).to(self.device)
     
+
 class gru4recF_attention(nn.Module):
     """
     embedding dim: the dimension of the item-embedding look-up table
@@ -713,7 +714,7 @@ class gru4recF_attention(nn.Module):
         if cat:
             attn_dim = attn_dim + hidden_dim # ht cat weightedSum
         
-#         # add 1 to the output dimension because we have to add a pad token
+        # add 1 to the output dimension because we have to add a pad token
         if not self.tied:
             self.output_layer = nn.Linear(attn_dim,output_dim)
         
@@ -722,10 +723,6 @@ class gru4recF_attention(nn.Module):
             self.output_layer.weight = self.movie_embedding.weight
     
     def forward(self,x,x_lens,x_genre=None,pack=True,**kwargs):
-        # add the plot embedding and movie embedding
-        # do I add non-linearity or not? ... 
-        # concatenate or not? ...
-        # many questions ...
         batch_size = x.size()[0]
         if (self.bert_dim != 0) and (self.genre_dim != 0):
             x = self.movie_embedding(x) + self.plot_projection(F.leaky_relu(self.plot_embedding(x))) + self.genre_embedding(x_genre).sum(2)
@@ -736,24 +733,19 @@ class gru4recF_attention(nn.Module):
         else:
             x = self.movie_embedding(x)
         
-#         print("Embedder Dimension: ")
-#         print(x.size())
-        
         if pack:
             x = pack_padded_sequence(x,x_lens,batch_first=True,enforce_sorted=False)
         
         encoder_states, _ = self.encoder_layer(x) 
-        
         if pack:
             encoder_states, _ = pad_packed_sequence(encoder_states, batch_first=self.batch_first,total_length=self.max_length,padding_value=self.pad_token)
-        
+            
         if self.attn:
             attn_states = self.attention_layer(encoder_states)
-#             hidden_state = self.attention_layer(hidden_state)
         
         # CCs = BS x MS x 2HS
         combined_contexts = torch.zeros(batch_size,self.max_length,self.attn_dim)
-        if torch.cuda.is_available(): 
+        if torch.cuda.is_available():
             combined_contexts = combined_contexts.cuda()
         
         for t in range(self.max_length):
@@ -769,37 +761,14 @@ class gru4recF_attention(nn.Module):
             # CV = BS x HS
             context_vector = torch.bmm(context_frame_transposed,attention_score).squeeze(2)
             # CH = BS x HS
-#             current_hidden = current_hidden.squeeze(2)
+            #current_hidden = current_hidden.squeeze(2)
             # CC = BS x AS
             combined_contexts[:,t,:] = context_vector
         
-#         for t in range(max_length):
-#             # CF = BS x (t+1) x AS
-#             context_frame = attn_states[:,:t+1,:]
-#             # CH = BS x 1 x AS
-#             current_hidden = attn_states[:,t,:].unsqueeze(1)
-#             # CH = BS x (t+1) x AS
-#             current_hidden = torch.cat((t+1)*[current_hidden],1)
-#             #CBF = BS x (t+1) x 2*AS
-#             combined_frame = torch.cat((context_frame,current_hidden),2)
-#             # AS = BS x (t+1) x 1
-#             attention_score = self.score_layer(combined_frame) / self.attn_dim
-#             attention_score = self.sigmoid(attention_score)
-#             attention_score = torch.nn.functional.softmax(attention_score,1)
-#             # CFT = BS x HS x (t+1)
-#             context_frame_transposed = torch.transpose(context_frame,1,2) # hidden_state?
-#             # CV = BS x HS
-#             context_vector = torch.bmm(context_frame_transposed,attention_score).squeeze(2)
-#             # CH = BS x HS
-# #             current_hidden = current_hidden.squeeze(2)
-#             # CC = BS x AS
-#             combined_contexts[:,t,:] = context_vector
 
         if self.cat:
             ## CCs = BS x MS x AS, ES = BS x MS x HS
             combined_contexts_cat = torch.cat((combined_contexts,encoder_states),2)
-                
-        # print(combined_contexts_cat)
             
         # CCC = BS x MS x (AS + HS)
         # O = BS x MS x V
@@ -807,16 +776,8 @@ class gru4recF_attention(nn.Module):
             x = self.output_layer(combined_contexts_cat)
         else:
             x = self.output_layer(combined_contexts)
-            
-#         print("Encoder States: ")
-#         print(encoder_states)
-#         print(encoder_states.size())
-#         print("Combined Contexts: ")
-#         print(combined_contexts.size())
-#         print("Combined Contexts Cat.: ")
-#         print(combined_contexts_cat.size())
-        
         return x
+    
     def initHidden(self):
         return torch.zeros(1, 1, self.hidden_size, device=device)
     def init_weight(self,reset_object,feature_embed):
