@@ -86,25 +86,27 @@ execute these `.py` files using Jupyter Notebook, as described above.
 ### Data Scraping
 
 To replicate our dataset from scratch, you should first download the `MovieLens
-1M` Dataset from the
-[GroupLens site](https://grouplens.org/datasets/movielens/1m/).
-After downloading and extracting the data archive as described on the GroupLens
-website, please place the data in a directory named `ml-1m`, or `data`.
+1M` and `MovieLens 20M` datasets from the
+[GroupLens site](https://grouplens.org/datasets/movielens/).
+While we only tested our model on the 1M dataset, you will need the 20M dataset
+downloaded to generate the plot-augmented 1M dataset.
 
+After downloading and extracting the data archive as described on the GroupLens
+website, please place the MovieLens 1M data in `data/movielens-1m/`, and the 20M
+data in `data/movielens-20m/`.
 Now, you will want to augment the MovieLens 1M dataset with plot summaries to
 use for our plot embeddings. You can do so by running the `data-scraping.ipynb`
 notebook; instructions for its use are within. Note that this scraping process
 involves manually visiting IMDb and copying in movie plots (some movies are
 unable to be scraped directly from IMDb).
-
 If you want to skip this lengthy process, we have included the MovieLens-1M
 dataset with concatenated plots in the `data` directory of this repository.
-The data in `data/` exactly mirrors the MovieLens 1M dataset, with one
+The files in `data/` exactly mirror the MovieLens 1M dataset, with one
 exception -- `movies.csv` now has an added "plot" column describing the plot of
 the movie.
 
 We have linked our generated DistilBERT plot embeddings below.
-If the links are broken, please submit a PR to this repository for a fix.
+If the links are broken, please file an issue in this repository.
 
 1. MovieLens 1M DistilBERT plot embeddings: put this data a file called
    `bert_sequence_1m.txt`. The data can be found

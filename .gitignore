@@ -1,2 +1,4 @@
 .ipynb_checkpoints/
 __pycache__/
+data/bert_sequence_20m.txt
+data/bert_sequence_1m.txt
