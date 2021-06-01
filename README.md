@@ -1,4 +1,4 @@
-# Attentive Session-Based Recommendations
+# Attentive Session-Based Recommendations with Side Information
 
 This repository contains a list of materials associated with a final project
 for CS 249: Advanced Data Mining w/ Yizhou Sun, Spring 2021 at UCLA.
@@ -39,7 +39,7 @@ of our project code.
 
 To run files with the `.py` suffix, please run `python3
 FILE_I_WANT_TO_RUN.py` from your shell. Alternatively, you can view and
-execute these files using Jupyter Notebook, as described above.
+execute these `.py` files using Jupyter Notebook, as described above.
 
 ## Files
 
@@ -69,9 +69,6 @@ execute these files using Jupyter Notebook, as described above.
   the model on the given dataset.
 - `NextItNet_run.py`, along with some extra code to search through
   hyperparameters en masse.
-
-## Python Modules
-
 - `model.py`: This Python module contains our model's classes.
 - `metrics.py`: This Python module contains the metric functions that we
   used to train and evaluate our design (eg. BPR loss).
@@ -82,7 +79,44 @@ execute these files using Jupyter Notebook, as described above.
 - `utils.py`: This model contains some helper functions of use when
   manipulating data. For example, it allows us to convert BERT
   language embeddings from CSV form into dictionary form.
-
-## Other
-
 - `README.md`: Hopefully, you've figured out what this one does by now.
+
+## Project Replication
+
+### Data Scraping
+
+To replicate our dataset from scratch, you should first download the `MovieLens
+1M` Dataset from the
+[GroupLens site](https://grouplens.org/datasets/movielens/1m/).
+After downloading and extracting the data archive as described on the GroupLens
+website, please place the data in a directory named `ml-1m`, or `data`.
+
+Now, you will want to augment the MovieLens 1M dataset with plot summaries to
+use for our plot embeddings. You can do so by running the `data-scraping.ipynb`
+notebook; instructions for its use are within. Note that this scraping process
+involves manually visiting IMDb and copying in movie plots (some movies are
+unable to be scraped directly from IMDb).
+
+If you want to skip this lengthy process, we have included the MovieLens-1M
+dataset with concatenated plots in the `data` directory of this repository.
+The data in `data/` exactly mirrors the MovieLens 1M dataset, with one
+exception -- `movies.csv` now has an added "plot" column describing the plot of
+the movie.
+
+We have linked our generated DistilBERT plot embeddings below.
+If the links are broken, please submit a PR to this repository for a fix.
+
+1. MovieLens 1M DistilBERT plot embeddings: put this data a file called
+   `bert_sequence_1m.txt`. The data can be found
+   [here](https://drive.google.com/file/d/1D6_jvNBs6YNhYU8Bd9UOKBVQrnoNAO78/view?usp=sharing).
+2. MovieLens 20M DistilBERT plot embeddings: put this data a file called
+   `bert_sequence_20m.txt`. We didn't use this dataset for our experiments. The
+   data can be found
+   [here](https://drive.google.com/file/d/1zzXhfT4LrQIxDCWHlA34D-g1VVl2ZU7s/view?usp=sharing).
+
+After the plot embeddings have been generated, we have enough data to run our
+models.
+
+All Jupyter Notebooks here are self contained. They use the `preprocessing.py`
+Python module (included here) to structure the data into their preferred forms.
+You can run the Jupyter notebooks to directly obtain results.
