@@ -753,7 +753,8 @@ class gru4recF_attention(nn.Module):
         
         # CCs = BS x MS x 2HS
         combined_contexts = torch.zeros(batch_size,self.max_length,self.attn_dim)
-        combined_contexts = combined_contexts.cuda()
+        if torch.cuda.is_available(): 
+            combined_contexts = combined_contexts.cuda()
         
         for t in range(max_length):
             # CF = BS x (t+1) x HS
