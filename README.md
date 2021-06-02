@@ -1,7 +1,7 @@
 # Attentive Session-Based Recommendations with Side Information
 
 This repository contains a list of materials associated with a final project
-for CS 249: Advanced Data Mining w/ Yizhou Sun, Spring 2021 at UCLA.
+for CS 247: Advanced Data Mining w/ Yizhou Sun, Spring 2021 at UCLA.
 This repository can be used to replicate our project, when used in conjunction
 with our final paper.
 
@@ -20,15 +20,15 @@ Once Conda is installed, please run the following commands in the project's
 root directory via your shell.
 
 ```
-conda create --name cs-249-project --file requirements.txt
+conda create --name cs-247-project --file requirements.txt
 
-conda activate cs-249-project
+conda activate cs-247-project
 ```
 
 This will create and activate a Conda environment with all the dependencies
 required to use our project code. Note that the Conda environment is not
 persistent -- when running our code in a new shell session, you will have to
-re-run `conda activate cs-249-project`.
+re-run `conda activate cs-247-project`.
 
 From here, you can look through the other files in our project.
 
