@@ -103,17 +103,18 @@ If you want to skip this lengthy process, we have included the MovieLens-1M
 dataset with concatenated plots in the `data` directory of this repository.
 The files in `data/` exactly mirror the MovieLens 1M dataset, with one
 exception -- `movies.csv` now has an added "plot" column describing the plot of
-the movie.
+the movie. You can also access our augmented `movies.csv` file 
+[here](https://drive.google.com/file/d/1NdGcYM-DL7qHlrq5VmCI6S8ytC4FHvan/view?usp=sharing)
 
 We have linked our generated DistilBERT plot embeddings below.
 If the links are broken, please file an issue in this repository.
 
 1. MovieLens 1M DistilBERT plot embeddings: save this file as
    `data/bert_sequence_1m.txt`. The data can be found
-   [here](https://drive.google.com/file/d/1D6_jvNBs6YNhYU8Bd9UOKBVQrnoNAO78/view?usp=sharing).
+   [here](https://drive.google.com/file/d/1BkNB4t_OQpR57mkSvhuaIAN5W5cKcQ1s/view?usp=sharing).
 2. MovieLens 20M DistilBERT plot embeddings: save this file as
    `data/bert_sequence_20m.txt`. The data can be found
-   [here](https://drive.google.com/file/d/1zzXhfT4LrQIxDCWHlA34D-g1VVl2ZU7s/view?usp=sharing).
+   [here](https://drive.google.com/file/d/1L6v-lXrvqoY3Er4epn6nsjCRB6y2YJO-/view?usp=sharing).
 
 After the plot embeddings have been generated, we have enough data to run our
 models.
