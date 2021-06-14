@@ -74,6 +74,7 @@ class Recall_E_prob(object):
                     if mode == "test":
                         history = set(history)
                         
+                    
                     #sample_negatives = []
                     sample_negatives = [labels[i,x_lens[i].item()-1].item()]
                     while len(sample_negatives) < 101:
@@ -85,6 +86,13 @@ class Recall_E_prob(object):
                     #sample_negatives = sample_negatives[:100].copy()
                     sample_negatives = sample_negatives[:101].copy()
                     #sample_negatives.append(labels[i,x_lens[i].item()-1].item())
+                    
+
+                    
+
+
+                        
+
                     rank = torch.where(outputs[i,x_lens[i].item()-1,sample_negatives].argsort(descending=True)==0)[0].item()          
                     #topk_items = outputs[i,x_lens[i].item()-1,sample_negatives].argsort(0,descending=True)[:self.k]
                     
@@ -314,12 +322,14 @@ class BPRMaxLoss(nn.Module):
             
             positive_scores = torch.gather(all_indices, dim=1, index=labels[i][:x_lens[i].item()].unsqueeze(1))
             
+            
             negative_item_ids = []
             
             # check if we match the sequence length
             while len(negative_item_ids) < x_lens[i].item():
-                inner_neg_ids = []
                 
+                inner_neg_ids = []
+                    
                 # check if we match the sample length
                 while len(inner_neg_ids) < self.samples:
                     sampled_ids = np.random.choice(self.n_items, self.samples, replace=False, p=self.p).tolist()
@@ -330,6 +340,17 @@ class BPRMaxLoss(nn.Module):
                 #add in one sequence
                 negative_item_ids.append(np.array(inner_neg_ids))
                 
+                """
+                while len(inner_neg_ids) < self.samples+1:
+                    sampled_ids = np.random.choice(self.n_items, self.samples, replace=False, p=self.p).tolist()
+                    sampled_ids = [x for x in sampled_ids if x not in uid_history and x not in inner_neg_ids]
+                    inner_neg_ids.extend(sampled_ids[:])
+                        
+                inner_neg_ids = inner_neg_ids[:self.samples].copy()
+                negative_item_ids.append(np.array(inner_neg_ids))
+                """
+
+
             negative_scores = torch.gather(all_indices, 
                                            dim=1, 
                                            index=torch.LongTensor(np.array(negative_item_ids)).to(self.device))
