@@ -11,13 +11,13 @@
 # All Hyperparameters in the Spreadsheet.
 
 num_epochs_all = [50]
-lr_all = [ 0.001, 0.01, 0.001,0.001,0.0001,0.01]
+lr_all = [ 0.01, 0.001, 0.001,0.001,0.0001,0.01]
 # used when using two optimizers ("alternate" training method). 
 # Usually set to lr / 10, but try tweaking it. 
-lr_alt_all = [ 0.01, 0.001,0.001, 0.0001,0.001,0.01]
+lr_alt_all = [ 0.001, 0.01,0.001, 0.0001,0.001,0.01]
 batch_size =  64
-reg_all = [2e-5,2e-4,0]
-bpr_reg_all = [0.8,2,0]
+reg_all = [3e-5,2e-6]
+bpr_reg_all = [0.5,1.5,0]
 num_neg_samples_all = [25]
 train_method_all = [ "alternate","interleave"]
 hidden_dim_all = [256,512]
@@ -64,7 +64,7 @@ read_filename ="data/movielens-1m/ratings.dat"
 read_bert_filename = "data/bert_sequence_1m.txt"
 read_movie_filename = "" 
 size = "1m"
-device = torch.device('cuda:6' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 # %%
@@ -269,6 +269,8 @@ Recall_Object = Recall_E_prob(ml_1m,user_history,n_users,n_items,k=k,device=devi
 # %%
 # ------------------Training Initialization----------------------#
 
+
+
 def train_model(model, num_epochs, loss_fn, loss_type, train_method, tied, lr, lr_alternate, reg): 
 		max_train_hit = (0,0,0)
 		max_val_hit = (0,0,0)
@@ -470,7 +472,7 @@ for num_epochs in num_epochs_all:
 															'params': row_params, 
 															'results': row_results
 													}
-													with open("hyperparam-results.txt", 'a') as f: 
+													with open("hyperparam-results-additional.txt", 'a') as f: 
 														json.dump(row_entry, f)
 														f.write("\n")
 
