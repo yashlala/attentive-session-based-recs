@@ -285,13 +285,36 @@ class BPRLoss(nn.Module):
         return accumulator / uids.shape[0]
 
 
+
+def gen_negative_samples(b, users, user_history, N_s, N, p): 
+    """TODO
+
+    Params: 
+        b := the batch size
+        users := (b, 1) array of users whose IDs TODO
+
+    Returns: 
+        (b, N_s) array. Each row is 
+    """
+    probs = np.broadcast_to(p, (b, N))
+    for i, u in enumerate(users): 
+        for click in user_history[u]: 
+            probabilities[i, click] = 0
+    
+    ret = np.zeros((b, N_s))
+    for i in len(probs): 
+        ret[i] = np.random.choice(N, size=(N_s,), p=probs[i], replace=False)
+    return ret
+
+
 class BPRMaxLoss(nn.Module):
     """
     BPR loss function that does not utilize the no click history from preprocessing
     
     """
     
-    def __init__(self, user_history: dict, n_items, df: pd.DataFrame, device: torch.device, reg = 0.0, samples=1):
+    def __init__(self, user_history: dict, n_items, df: pd.DataFrame,
+            device: torch.device, reg = 0.0, samples=1):
         self.n_items = n_items
         self.samples = samples
         self.user_history = user_history
