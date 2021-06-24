@@ -296,13 +296,16 @@ def gen_negative_samples(b, users, user_history, N_s, N, p):
     Returns: 
         (b, N_s) array. Each row is 
     """
-    probs = np.broadcast_to(p, (b, N))
+    probs = np.array(np.broadcast_to(p, (b, N)))
     for i, u in enumerate(users): 
         for click in user_history[u]: 
-            probabilities[i, click] = 0
+            probs[i, click] = 0
+
+    for i in range(len(probs)): 
+        probs[i] /= np.sum(probs[i])
     
     ret = np.zeros((b, N_s))
-    for i in len(probs): 
+    for i in range(len(probs)): 
         ret[i] = np.random.choice(N, size=(N_s,), p=probs[i], replace=False)
     return ret
 
