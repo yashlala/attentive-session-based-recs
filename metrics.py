@@ -254,31 +254,26 @@ class BPRLoss(nn.Module):
             uid_history = set(self.user_history[uid.item()][:-2]) # we only compute loss when training
             all_indices = output[i, :x_lens[i].item(), :]
             
-            positive_scores = torch.gather(all_indices, dim=1, index=labels[i][:x_lens[i].item()].unsqueeze(1))
+            positive_scores = torch.gather(all_indices, dim=1, 
+                                index=labels[i][:x_lens[i].item()].unsqueeze(1))
             
-            negative_item_ids = []
+            neg_sample_distribution = self.p.copy()
+            for click in uid_history:
+                neg_sample_distribution[click] = 0
+            neg_sample_distribution /= np.sum(neg_sample_distribution)
             
-            # check if we match the sequence length
-            while len(negative_item_ids) < x_lens[i].item():
-                inner_neg_ids = []
-                
-                # TODO: check this if sampling is correct
-                # check if we match the sample length
-                while len(inner_neg_ids) < self.samples:
-                    sampled_ids = np.random.choice(self.n_items, self.samples, replace=False, p=self.p).tolist()
-                    sampled_ids = [x for x in sampled_ids if x not in uid_history and x not in inner_neg_ids]
-                    sampled_ids = sampled_ids[:self.samples - len(inner_neg_ids)]
-                    inner_neg_ids.extend(sampled_ids[:])
-                
-                #add in one sequence
-                negative_item_ids.append(np.array(inner_neg_ids))
+            negative_item_ids = np.zeros((x_lens[i].item(), self.samples))
+            for j in range(self.samples):
+                negative_item_ids[:, j] = np.random.choice(self.n_items, 
+                                            size=x_lens[i].item(), 
+                                            p=neg_sample_distribution, 
+                                            replace=False)
                 
             negative_scores = torch.gather(all_indices, 
                                            dim=1, 
-                                           index=torch.LongTensor(np.array(negative_item_ids)).to(self.device))
+                                           index=torch.LongTensor(negative_item_ids).to(self.device))
             
             difference = positive_scores - negative_scores
-            
             
             accumulator += -torch.mean(torch.sum(F.logsigmoid(difference), dim=1))
         
@@ -296,13 +291,16 @@ def gen_negative_samples(b, users, user_history, N_s, N, p):
     Returns: 
         (b, N_s) array. Each row is 
     """
-    probs = np.broadcast_to(p, (b, N))
+    probs = np.array(np.broadcast_to(p, (b, N)))
     for i, u in enumerate(users): 
         for click in user_history[u]: 
-            probabilities[i, click] = 0
+            probs[i, click] = 0
+
+    for i in range(len(probs)): 
+        probs[i] /= np.sum(probs[i])
     
     ret = np.zeros((b, N_s))
-    for i in len(probs): 
+    for i in range(len(probs)): 
         ret[i] = np.random.choice(N, size=(N_s,), p=probs[i], replace=False)
     return ret
 
@@ -343,47 +341,29 @@ class BPRMaxLoss(nn.Module):
             uid_history = set(self.user_history[uid.item()][:-2]) # we only compute loss when training
             all_indices = output[i, :x_lens[i].item(), :]
             
-            positive_scores = torch.gather(all_indices, dim=1, index=labels[i][:x_lens[i].item()].unsqueeze(1))
+            positive_scores = torch.gather(all_indices, dim=1, 
+                                index=labels[i][:x_lens[i].item()].unsqueeze(1))
             
-            
-            negative_item_ids = []
-            
-            # check if we match the sequence length
-            while len(negative_item_ids) < x_lens[i].item():
-                
-                inner_neg_ids = []
-                    
-                # check if we match the sample length
-                while len(inner_neg_ids) < self.samples:
-                    sampled_ids = np.random.choice(self.n_items, self.samples, replace=False, p=self.p).tolist()
-                    sampled_ids = [x for x in sampled_ids if x not in uid_history and x not in inner_neg_ids]
-                    sampled_ids = sampled_ids[:self.samples - len(inner_neg_ids)]
-                    inner_neg_ids.extend(sampled_ids[:])
-                
-                #add in one sequence
-                negative_item_ids.append(np.array(inner_neg_ids))
-                
-                """
-                while len(inner_neg_ids) < self.samples+1:
-                    sampled_ids = np.random.choice(self.n_items, self.samples, replace=False, p=self.p).tolist()
-                    sampled_ids = [x for x in sampled_ids if x not in uid_history and x not in inner_neg_ids]
-                    inner_neg_ids.extend(sampled_ids[:])
-                        
-                inner_neg_ids = inner_neg_ids[:self.samples].copy()
-                negative_item_ids.append(np.array(inner_neg_ids))
-                """
+            neg_sample_distribution = self.p.copy()
+            for click in uid_history:
+                neg_sample_distribution[click] = 0
+            neg_sample_distribution /= np.sum(neg_sample_distribution)
 
+            negative_item_ids = np.zeros((x_lens[i].item(), self.samples))
+            for j in range(self.samples):
+                negative_item_ids[:, j] = np.random.choice(self.n_items, 
+                                            size=x_lens[i].item(), 
+                                            p=neg_sample_distribution, 
+                                            replace=False)
 
             negative_scores = torch.gather(all_indices, 
                                            dim=1, 
-                                           index=torch.LongTensor(np.array(negative_item_ids)).to(self.device))
+                                           index=torch.LongTensor(negative_item_ids).to(self.device))
             
             difference = positive_scores - negative_scores
             
-            #TODO: check this stuff
             soft_max_neg = F.softmax(negative_scores, dim=1) 
             
-            #TODO: check this stuff
             accumulator += torch.mean(
                 -torch.log(torch.sum(soft_max_neg * torch.sigmoid(difference), dim=1)) 
                 + self.reg * torch.sum(soft_max_neg * negative_scores**2, dim = 1))
