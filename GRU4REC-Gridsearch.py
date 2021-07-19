@@ -39,7 +39,7 @@ min_len = 10
 
 # NextItNet options. 
 hidden_layers = 3
-model_type = "feature_add"
+model_type = "feature_concat"
 
 # %% [markdown]
 # # Data Loading and Preprocessing
@@ -64,7 +64,7 @@ read_filename ="data/movielens-1m/ratings.dat"
 read_bert_filename = "data/bert_sequence_1m.txt"
 read_movie_filename = "" 
 size = "1m"
-device = torch.device('cuda:6' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:4' if torch.cuda.is_available() else 'cpu')
 
 
 # %%
@@ -470,7 +470,7 @@ for num_epochs in num_epochs_all:
 															'params': row_params, 
 															'results': row_results
 													}
-													with open("hyperparam-results.txt", 'a') as f: 
+													with open("hyperparam-results-new-loss.txt", 'a') as f: 
 														json.dump(row_entry, f)
 														f.write("\n")
 
