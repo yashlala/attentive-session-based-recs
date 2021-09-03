@@ -108,7 +108,7 @@ def create_movie_df(filename=None,size="1m"):
     return df.reset_index(drop=True)
 
 
-def filter_df(df=None,item_min=10):
+def filter_df(df=None,item_min=5,item_freq_min=5):
     """
     Parameters
     ----------
@@ -141,19 +141,35 @@ def filter_df(df=None,item_min=10):
     # check to make sure there are no user session lengths less than item_min
     assert (filter_df.groupby('user_id').size() < item_min).sum() == 0
 
+    # filter to only keep items with 
+    item_counts = filter_df.groupby('item_id').size()
+    
+    # see which users have a session length greater than or equal to item_min
+
+    item_subset = np.in1d(filter_df.item_id,item_counts[item_counts >= item_freq_min].index)
+
+    filter_df = filter_df[item_subset].reset_index(drop=True)
+
+    
+    # check to make sure there are no user session lengths less than item_min
+    assert (filter_df.groupby('item_id').size() < item_freq_min).sum() == 0
+
     # group all rows in the dataframe by user, and then get the length of each user session
     user_group = filter_df.groupby('user_id').size()
+    item_group = filter_df.groupby('item_id').size()
 
     # get the number of unique users, items, ratings, and timestamps (number of unique values in each column)
     print(filter_df.nunique())
 
     # get the shape of the dataframe (rows x columns)
     print(filter_df.shape)
+    
 
     # print statistics about the user session lengths such as max, min, and average
     print("Minimum Session Length: {:d}".format(user_group.min()))
     print("Maximum Session Length: {:d}".format(user_group.max()))
     print("Average Session Length: {:.2f}".format(user_group.mean()))
+    print("Average Item User Appearances {:.2f}".format(item_group.mean()))
 
     return filter_df
 
@@ -344,7 +360,7 @@ def train_val_test_split(user_history=None,max_length=200):
         # assign value for each key (uid) the last max_length items before the last item in a user session history
         val_history[key] = history[-(max_length+1):-1]
         # assign value for each key (uid) the last max_length items in a user session history
-        test_history[key] = history[(-max_length):]
+        test_history[key] = history[-(max_length+0):]
 
     return train_history,val_history,test_history
 
