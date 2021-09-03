@@ -16,12 +16,12 @@ lr_all = [ 0.001, 0.01, 0.001,0.001,0.0001,0.01]
 # Usually set to lr / 10, but try tweaking it. 
 lr_alt_all = [ 0.01, 0.001,0.001, 0.0001,0.001,0.01]
 batch_size =  64
-reg_all = [2e-5,2e-4,0]
+reg_all = [2e-5,2e-4,0,1e-3]
 bpr_reg_all = [0.8,2,0]
-num_neg_samples_all = [25]
-train_method_all = [ "alternate","interleave"]
+num_neg_samples_all = [25,50]
+train_method_all = [ "alternate"]
 hidden_dim_all = [256,512]
-embedding_dim_all = [256,512 ] 
+embedding_dim_all = [256,512] 
 bert_dim_all = [ 768 ]
 # : ???
 max_length = 200 
@@ -35,11 +35,11 @@ dilations_all = [ (1,2,2,4) ] # Only used for cross entropy.
 window = 3
 dropout= 0
 k = 10
-min_len = 10
+min_len = 5
 
 # NextItNet options. 
 hidden_layers = 3
-model_type = "feature_concat"
+model_type = "feature_add"
 
 # %% [markdown]
 # # Data Loading and Preprocessing
