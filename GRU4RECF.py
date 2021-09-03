@@ -41,11 +41,11 @@ read_movie_filename = ""#"movies-1m.csv"
 size = "20m"
 
 num_epochs = 50
-lr =  0.005
+lr =  0.0005
 lr_alternate = 0.001
 batch_size = 64
-reg = 1e-6# was 1e-5 before
-train_method = "normal"
+reg = 0#1e-6# was 1e-5 before
+train_method = "alternate"
 loss_type = "BPR_MAX"
 num_neg_samples = 25
 reg_bpr = 0
@@ -53,7 +53,7 @@ reg_bpr = 0
 
 hidden_dim = 1024
 embedding_dim = 1024
-bert_dim= 0
+bert_dim= 768
 window = 0
 
 freeze_plot = False
@@ -62,16 +62,16 @@ dropout= 0
 
 k = 10
 max_length = 200
-min_len = 10
+min_len = 5
 
 
 # nextitnet options...
 hidden_layers = 3
 dilations = [1,2,4,16]
 
-model_type = "nextitnet"
+model_type = "feature_add"
 
-device = torch.device('cuda:5' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:4' if torch.cuda.is_available() else 'cpu')
 
 
 # %%
@@ -122,6 +122,8 @@ else:
 # ------------------Data Initialization----------------------#
 # how many unique users, items, ratings and timestamps are there
 n_users,n_items,n_ratings,n_timestamp = ml_1m.nunique()
+print("Number of Users {:d}".format(n_users))
+print("Number of Items {:d}".format(n_items))
 
 # value that padded tokens shall take
 pad_token = n_items
@@ -142,9 +144,12 @@ if size == "1m":
     user_history = create_user_history(ml_1m)
 
 elif size == "20m":
+    # user_history = create_user_history(ml_1m)
     import pickle
     with open('userhistory.pickle', 'rb') as handle:
         user_history = pickle.load(handle)
+    # with open('userhistory.pickle', 'wb') as handle:
+    #     pickle.dump(user_history,handle, protocol=pickle.HIGHEST_PROTOCOL)
 # create a dictionary of all items a user has not clicked
 # i.e. {user: [items not clicked by user]}
 # user_noclicks = create_user_noclick(user_history,ml_1m,n_items)
@@ -400,6 +405,8 @@ for epoch in range(num_epochs):
         max_train_mrr = training_mrr
         max_val_mrr = validation_mrr
         max_test_mrr = testing_mrr
+        print("BEST MODEL PERFORMANCE")
+
     
     torch.cuda.empty_cache()
     print("Training Loss: {:.5f}".format(running_loss/len(train_dl)))
