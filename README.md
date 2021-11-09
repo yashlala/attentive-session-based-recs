@@ -1,4 +1,5 @@
 # Attentive Session-Based Recommendations with Side Information
+Up to date code is in the refactor branch.
 
 This repository contains a list of materials associated with a final project
 for CS 247: Advanced Data Mining w/ Yizhou Sun, Spring 2021 at UCLA.
@@ -124,3 +125,10 @@ models.
 All Jupyter Notebooks here are self contained. They use the `preprocessing.py`
 Python module (included here) to structure the data into their preferred forms.
 You can run the Jupyter notebooks to directly obtain results.
+
+## Citing This Paper
+Please cite the following paper if you intend to use this code or dataset for your research.
+> M. Potter, H. Liu, Y. Lala, C. Loanzon, Y. Sun, "GRU4RecBE: A Hybrid Session-Based Movie Recommendation System (Student Abstract)", AAAI Conference on Artificial Intelligence, North America, Mar. 2022
+
+### Acknowledgements
+Yizhou Sun provided resources for UCLA SCAI1 and SCAI2 to perform experiments and benchmarks on. 
