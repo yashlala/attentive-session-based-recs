@@ -115,7 +115,7 @@ If the links are broken, please file an issue in this repository.
    [here](https://drive.google.com/file/d/1BkNB4t_OQpR57mkSvhuaIAN5W5cKcQ1s/view?usp=sharing).
 2. MovieLens 20M DistilBERT plot embeddings: save this file as
    `data/bert_sequence_20m.txt`. The data can be found
-   [here](https://drive.google.com/file/d/1L6v-lXrvqoY3Er4epn6nsjCRB6y2YJO-/view?usp=sharing).
+   [here](https://drive.google.com/file/d/18QAWl7D4tzae0zhZxweYMZGMNQGvPZtE/view?usp=share_link).
 
 After the plot embeddings have been generated, we have enough data to run our
 models.
